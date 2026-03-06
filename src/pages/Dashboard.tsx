@@ -18,7 +18,7 @@ type DashboardData = {
 const fetchDashboard = async (): Promise<DashboardData> => {
   const response = await api.get("/api/dashboard");
   const rawData = response.data; 
-  
+
   return {
     totalPayments: rawData.totalInvested || 0,
     totalSavings: rawData.savings || 0,
