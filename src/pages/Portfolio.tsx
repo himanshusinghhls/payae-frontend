@@ -17,8 +17,8 @@ const fetchPortfolio = async (): Promise<PortfolioData> => {
   const data = response.data?.data || response.data;
   return {
     savingsBalance: data.savingsBalance || 0,
-    mutualFundUnits: data.mutualFundUnits || 0,
-    goldGrams: data.goldGrams || 0,
+    mutualFundUnits: data.mutualFundUnits || data.mfUnits || data.mf || 0,
+    goldGrams: data.goldGrams || data.gold || 0,
     totalInvested: data.totalInvested || 0,
   };
 };
