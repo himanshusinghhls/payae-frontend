@@ -19,12 +19,12 @@ const CONTACTS = [
   { id: 1, name: "Amazon India", upi: "amazon@apl" },
   { id: 2, name: "Zomato", upi: "zomato@paytm" },
   { id: 3, name: "Starbucks", upi: "starbucks@sbi" },
-  { id: 4, name: "xyz", upi: "xyz@oksbi" },
+  { id: 4, name: "Rahul (Friend)", upi: "rahul99@okicici" },
   { id: 5, name: "College Canteen", upi: "canteen@ybl" }
 ];
 
 export default function Payment() {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient(); 
   const [baseAmount, setBaseAmount] = useState<number | "">("");
   const [roundup, setRoundup] = useState<number>(0);
   const [isRoundUpEnabled, setIsRoundUpEnabled] = useState(true);
@@ -64,10 +64,10 @@ export default function Payment() {
       } else if (val >= 100 && val < 500) {
         const rem = val % 10;
         calculated = rem === 0 ? 0 : 10 - rem;
-        if (calculated < 9) calculated += 10;
+        if (calculated < 9) calculated += 10; 
       } else if (val >= 500 && val < 1000) {
         const rem = val % 20;
-        calculated = rem === 0 ? 0 : 20 - rem;
+        calculated = rem === 0 ? 0 : 20 - rem; 
       } else {
         const rem = val % 50;
         calculated = rem === 0 ? 0 : 50 - rem;
@@ -90,6 +90,9 @@ export default function Payment() {
       
       let actualOrderId = typeof orderRes.data === 'string' ? JSON.parse(orderRes.data).id : orderRes.data.id || orderRes.data;
 
+      const finalRoundupAmount = roundup;
+      const finalBaseAmount = Number(baseAmount);
+
       return new Promise((resolve, reject) => {
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY, 
@@ -105,10 +108,10 @@ export default function Payment() {
                 orderId: response.razorpay_order_id,
                 paymentId: response.razorpay_payment_id,
                 signature: response.razorpay_signature,
-                amount: Number(baseAmount), 
-                roundUpAmount: roundup
+                amount: finalBaseAmount, 
+                roundUpAmount: finalRoundupAmount
               });
-              resolve(true);
+              resolve({ successRoundup: finalRoundupAmount });
             } catch (err) { reject(err); }
           },
           modal: { ondismiss: () => reject(new Error("Cancelled")) },
@@ -122,13 +125,13 @@ export default function Payment() {
         rzp.open();
       });
     },
-    onSuccess: () => {
-      setLastPaidRoundup(roundup); 
+    onSuccess: async (data: any) => {
+      setLastPaidRoundup(data.successRoundup); 
       setPaymentStatus("success");
       setBaseAmount("");
       setRoundup(0);
       
-      queryClient.invalidateQueries({ queryKey: ['dashboard_balance'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard_balance'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['ledger'] });
       queryClient.invalidateQueries({ queryKey: ['portfolio'] });
@@ -149,7 +152,11 @@ export default function Payment() {
             <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-payae-card backdrop-blur-xl border border-payae-green/30 p-8 rounded-3xl text-center">
               <CheckCircle className="text-payae-green w-16 h-16 mx-auto mb-6" />
               <h2 className="text-3xl font-bold text-white mb-2">Paid to {selectedContact.name}</h2>
-              <p className="text-gray-400">₹{lastPaidRoundup.toFixed(2)} was successfully routed to your wealth portfolio!</p>
+              {lastPaidRoundup > 0 ? (
+                 <p className="text-gray-400">₹{lastPaidRoundup.toFixed(2)} was successfully routed to your wealth portfolio!</p>
+              ) : (
+                 <p className="text-gray-400">Payment completed without auto-investing.</p>
+              )}
             </motion.div>
           ) : paymentStatus === "failed" ? (
              <motion.div key="failed" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-payae-card backdrop-blur-xl border border-red-500/30 p-8 rounded-3xl text-center">
@@ -167,6 +174,7 @@ export default function Payment() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-400">Bank Balance</p>
+                  {/* The balance will instantly snap to the new value upon success! */}
                   <p className={`font-bold ${currentBalance < 500 ? 'text-red-400' : 'text-payae-success'}`}>₹{currentBalance.toFixed(2)}</p>
                 </div>
               </div>
