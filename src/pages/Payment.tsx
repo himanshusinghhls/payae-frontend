@@ -57,8 +57,20 @@ export default function Payment() {
     mutationFn: async () => {
       const isLoaded = await loadRazorpayScript();
       if (!isLoaded) throw new Error("Razorpay SDK failed to load");
+      
       const orderRes = await api.post("/api/payments/order", { amount: totalPayable });
-      const orderData = orderRes.data; 
+      
+      let actualOrderId = "";
+      if (typeof orderRes.data === 'string') {
+        try {
+          const parsed = JSON.parse(orderRes.data);
+          actualOrderId = parsed.id;
+        } catch (e) {
+          actualOrderId = orderRes.data; 
+        }
+      } else {
+        actualOrderId = orderRes.data?.id || orderRes.data;
+      }
 
       return new Promise((resolve, reject) => {
         const options = {
@@ -67,7 +79,7 @@ export default function Payment() {
           currency: "INR",
           name: "PayAE",
           description: "Payment & Auto-Savings",
-          order_id: orderData, 
+          order_id: actualOrderId,
           theme: { color: "#1c3166" },
           handler: async function (response: any) {
             try {

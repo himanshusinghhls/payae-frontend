@@ -92,8 +92,14 @@ export default function Topbar() {
                   </p>
                 </div>
 
-                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-                  <UserIcon className="w-4 h-4" /> Profile Settings
+                <button 
+                  onClick={() => {
+                    setShowProfileMenu(false);
+                    navigate('/settings');
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <UserIcon className="w-4 h-4" /> Profile & Allocation Settings
                 </button>
 
                 {/* Logout Button (Fixed) */}
