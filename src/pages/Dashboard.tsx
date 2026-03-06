@@ -16,7 +16,7 @@ type DashboardData = {
 }
 
 const fetchDashboard = async (): Promise<DashboardData> => {
-  const { data } = await api.get("/dashboard");
+  const { data } = await api.get("/api/dashboard");
   return data.data;
 }
 

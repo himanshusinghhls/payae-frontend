@@ -13,7 +13,7 @@ type Transaction = {
 };
 
 const fetchLedger = async (): Promise<Transaction[]> => {
-  const { data } = await api.get("/api/ledger"); 
+  const { data } = await api.get("/api/transactions"); 
   return data.data || data;
 };
 
