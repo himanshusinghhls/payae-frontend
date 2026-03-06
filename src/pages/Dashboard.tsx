@@ -78,17 +78,20 @@ export default function Dashboard() {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <motion.div variants={itemVariants} className="lg:col-span-2 bg-payae-card backdrop-blur-xl border border-payae-border p-6 rounded-3xl shadow-2xl relative overflow-hidden">
+          {/* FIX: Added strict height h-[400px] and flex-col to contain the chart! */}
+          <motion.div variants={itemVariants} className="lg:col-span-2 bg-payae-card backdrop-blur-xl border border-payae-border p-6 rounded-3xl shadow-2xl relative overflow-hidden h-[400px] flex flex-col">
             <div className="absolute top-0 right-0 w-64 h-64 bg-payae-accent/5 rounded-full blur-[80px] pointer-events-none" />
             <PortfolioChart />
           </motion.div>
           
-          <motion.div variants={itemVariants} className="bg-payae-card backdrop-blur-xl border border-payae-border p-6 rounded-3xl shadow-2xl">
-            <h2 className="text-lg font-bold mb-4 text-payae-accent flex items-center gap-2">
+          <motion.div variants={itemVariants} className="bg-payae-card backdrop-blur-xl border border-payae-border p-6 rounded-3xl shadow-2xl h-[400px] flex flex-col">
+            <h2 className="text-lg font-bold mb-4 text-payae-accent flex items-center gap-2 shrink-0">
               <span className="w-2 h-2 rounded-full bg-payae-accent animate-pulse" />
               Asset Allocation
             </h2>
-            <ChartCard portfolio={{ savingsBalance: data.totalSavings, mfUnits: data.mfUnits, goldGrams: data.goldGrams }} />
+            <div className="flex-1 relative">
+              <ChartCard portfolio={{ savingsBalance: data.totalSavings, mfUnits: data.mfUnits, goldGrams: data.goldGrams }} />
+            </div>
           </motion.div>
         </div>
 

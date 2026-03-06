@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../api/client";
 import AppLayout from "../components/layout/AppLayout";
-import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDownLeft, Receipt } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUpRight, ArrowDownLeft, Receipt, ChevronDown } from "lucide-react";
 
 type Transaction = {
   id: number;
@@ -14,7 +15,7 @@ type Transaction = {
 
 const fetchLedger = async (): Promise<Transaction[]> => {
   const response = await api.get("/api/transactions"); 
-  return Array.isArray(response.data) ? response.data : [];
+  return Array.isArray(response.data) ? response.data : response.data?.data || [];
 };
 
 export default function Ledger() {
@@ -23,74 +24,103 @@ export default function Ledger() {
     queryFn: fetchLedger,
   });
 
-  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-  const item = { hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0 } };
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const toggleExpand = (id: number) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto mt-6">
+      <div className="max-w-3xl mx-auto mt-6">
         
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-payae-border">
           <div>
-            <h2 className="text-3xl font-bold text-white">Transaction History</h2>
-            <p className="text-sm text-gray-400 mt-1">Track your payments and automated wealth allocations.</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-white">Transaction History</h2>
+            <p className="text-sm text-gray-400 mt-1">Click a transaction to view distribution details.</p>
           </div>
-          <div className="bg-payae-card p-3 rounded-xl border border-payae-border">
+          <div className="bg-payae-card p-3 rounded-xl border border-payae-border hidden md:block">
             <Receipt className="text-payae-accent w-6 h-6" />
           </div>
         </div>
 
         {isLoading ? (
-          <div className="space-y-4 animate-pulse">
-            {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-20 bg-payae-card rounded-2xl border border-payae-border" />)}
+          <div className="space-y-3 animate-pulse">
+            {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-16 bg-payae-card rounded-xl border border-payae-border" />)}
           </div>
         ) : isError ? (
-          <div className="text-center p-10 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400">
-            Failed to load transactions. Please try again.
+          <div className="text-center p-6 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
+            Failed to load transactions.
           </div>
         ) : !transactions || transactions.length === 0 ? (
-          <div className="text-center p-16 bg-payae-card border border-payae-border rounded-3xl">
+          <div className="text-center p-16 bg-payae-card border border-payae-border rounded-2xl">
             <Receipt className="mx-auto text-gray-600 w-12 h-12 mb-4" />
             <h3 className="text-xl font-medium text-white mb-2">No transactions yet</h3>
-            <p className="text-gray-400">Make your first payment to see your auto-savings here!</p>
           </div>
         ) : (
-          <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
-            {transactions.map((t, i) => {
+          <div className="space-y-3">
+            {/* Sort newest first */}
+            {[...transactions].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map((t, i) => {
               const typeStr = t.type || ""; 
               const isExpense = typeStr.includes("PAYMENT");
               const Icon = isExpense ? ArrowUpRight : ArrowDownLeft;
+              const isExpanded = expandedId === (t.id || i);
               
               return (
-                <motion.div key={t.id || i} variants={item} className="bg-payae-card backdrop-blur-xl border border-payae-border p-5 rounded-2xl flex items-center justify-between hover:bg-white/5 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${isExpense ? 'bg-red-500/10 text-red-400' : 'bg-payae-success/10 text-payae-success'}`}>
-                      <Icon className="w-6 h-6" />
+                <motion.div key={t.id || i} className="bg-payae-card border border-payae-border rounded-xl overflow-hidden transition-colors hover:border-gray-600 cursor-pointer" onClick={() => toggleExpand(t.id || i)}>
+                  
+                  {/* Compact Header Row */}
+                  <div className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-lg ${isExpense ? 'bg-gray-800 text-gray-300' : 'bg-payae-success/10 text-payae-success'}`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white text-md">
+                          {isExpense ? 'UPI Payment Sent' : 'Auto-Invested Round-Up'}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {t.timestamp ? new Date(t.timestamp).toLocaleDateString() : 'Processing...'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-white text-lg">
-                        {isExpense ? 'UPI Payment' : 'Auto Round-Up'}
-                      </p>
-                      <p className="text-sm text-gray-400 flex items-center gap-2">
-                        {/* FIX: Safe date parsing fallback */}
-                        <span>{t.timestamp ? new Date(t.timestamp).toLocaleDateString() : 'Processing...'}</span>
-                        {t.assetType && (
-                          <>
-                            <span className="w-1 h-1 bg-gray-600 rounded-full" />
-                            <span className="text-payae-accent uppercase text-xs font-bold tracking-wider">{t.assetType}</span>
-                          </>
-                        )}
-                      </p>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className={`text-lg font-bold ${isExpense ? 'text-white' : 'text-payae-success'}`}>
+                        {isExpense ? '-' : '+'}₹{(t.amount || 0).toFixed(2)}
+                      </div>
+                      <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
 
-                  <div className={`text-xl font-bold ${isExpense ? 'text-white' : 'text-payae-success'}`}>
-                    {isExpense ? '-' : '+'}₹{(t.amount || 0).toFixed(2)}
-                  </div>
+                  {/* Expanded Details */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-black/40 border-t border-payae-border p-4 px-16">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-500 block mb-1">Transaction ID</span>
+                            <span className="text-gray-300 font-mono text-xs">TXN-{t.id || 'PENDING'}</span>
+                          </div>
+                          {t.assetType && !isExpense && (
+                            <div>
+                              <span className="text-gray-500 block mb-1">Asset Allocation</span>
+                              <span className="text-payae-accent font-bold uppercase">{t.assetType}</span>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-gray-500 block mb-1">Exact Time</span>
+                            <span className="text-gray-300">{new Date(t.timestamp).toLocaleTimeString()}</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                 </motion.div>
               );
             })}
-          </motion.div>
+          </div>
         )}
       </div>
     </AppLayout>
