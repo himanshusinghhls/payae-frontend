@@ -1,7 +1,7 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import api from "../api/client"
 import { useAuth } from "../context/AuthContext"
-import { useNavigate } from "react-router-dom"
 
 export default function Login(){
 
@@ -9,47 +9,59 @@ export default function Login(){
   const [password,setPassword] = useState("")
 
   const {login} = useAuth()
-
   const navigate = useNavigate()
 
-  const submit = async(e:any)=>{
+  const handleSubmit = async (e:any)=>{
 
     e.preventDefault()
 
-    const res = await api.post("/auth/login",{email,password})
+    const res = await api.post("/auth/login",{
+      email,
+      password
+    })
 
     login(res.data.token)
 
     navigate("/")
+
   }
 
   return(
 
-    <div className="h-screen flex items-center justify-center">
+    <div className="h-screen flex items-center justify-center bg-gray-100">
 
-      <form onSubmit={submit} className="p-6 bg-white shadow rounded w-80">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded-xl shadow w-96"
+      >
 
-        <h2 className="text-xl font-bold mb-4">Login</h2>
+        <h2 className="text-xl font-semibold mb-6">
+          Login
+        </h2>
 
         <input
-        className="border w-full p-2 mb-3"
-        placeholder="Email"
-        onChange={(e)=>setEmail(e.target.value)}
+          className="w-full border p-2 mb-4 rounded"
+          placeholder="Email"
+          value={email}
+          onChange={(e)=>setEmail(e.target.value)}
         />
 
         <input
-        type="password"
-        className="border w-full p-2 mb-3"
-        placeholder="Password"
-        onChange={(e)=>setPassword(e.target.value)}
+          type="password"
+          className="w-full border p-2 mb-4 rounded"
+          placeholder="Password"
+          value={password}
+          onChange={(e)=>setPassword(e.target.value)}
         />
 
-        <button className="bg-blue-600 text-white w-full p-2 rounded">
-        Login
+        <button className="w-full bg-black text-white py-2 rounded">
+          Login
         </button>
 
       </form>
 
     </div>
+
   )
+
 }

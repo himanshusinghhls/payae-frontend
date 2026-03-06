@@ -1,10 +1,10 @@
 import axios from "axios"
 
 const api = axios.create({
-  baseURL: "https://payae-backend.onrender.com",
+  baseURL: "https://payae-backend.onrender.com/api"
 })
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config)=>{
 
   const token = localStorage.getItem("token")
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import api from "../api/client"
 
+import { motion } from "framer-motion"
+
 import AppLayout from "../components/layout/AppLayout"
 import StatCard from "../components/ui/StatCard"
 import PortfolioChart from "../components/charts/PortfolioChart"
@@ -49,9 +51,14 @@ export default function Dashboard(){
 
     <AppLayout>
 
-      {/* Top Stats */}
+      {/* Top Stats Animated */}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <motion.div
+        initial={{opacity:0,y:20}}
+        animate={{opacity:1,y:0}}
+        transition={{duration:0.5}}
+        className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+      >
 
         <StatCard
           title="Total Payments"
@@ -68,7 +75,7 @@ export default function Dashboard(){
           value={data.mfUnits}
         />
 
-      </div>
+      </motion.div>
 
 
       {/* Charts Section */}

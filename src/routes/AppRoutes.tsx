@@ -7,6 +7,8 @@ import Portfolio from "../pages/Portfolio"
 import Payment from "../pages/Payment"
 import Settings from "../pages/Settings"
 
+import ProtectedRoute from "./ProtectedRoute"
+
 export default function AppRoutes(){
 
   return(
@@ -15,13 +17,32 @@ export default function AppRoutes(){
 
       <Routes>
 
-        <Route path="/login" element={<Login/>} />
-        <Route path="/register" element={<Register/>} />
+        <Route path="/login" element={<Login/>}/>
+        <Route path="/register" element={<Register/>}/>
 
-        <Route path="/" element={<Dashboard/>} />
-        <Route path="/portfolio" element={<Portfolio/>} />
-        <Route path="/payment" element={<Payment/>} />
-        <Route path="/settings" element={<Settings/>} />
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Dashboard/>
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/portfolio" element={
+          <ProtectedRoute>
+            <Portfolio/>
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/payment" element={
+          <ProtectedRoute>
+            <Payment/>
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <Settings/>
+          </ProtectedRoute>
+        }/>
 
       </Routes>
 

@@ -5,17 +5,19 @@ export default function AppLayout({children}:{children:any}){
 
   return(
 
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex bg-gray-50 min-h-screen">
 
       <Sidebar/>
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1">
 
         <Topbar/>
 
-        <main className="p-6 overflow-y-auto">
+        <div className="p-8">
+
           {children}
-        </main>
+
+        </div>
 
       </div>
 
