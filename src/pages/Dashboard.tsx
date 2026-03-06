@@ -16,8 +16,16 @@ type DashboardData = {
 }
 
 const fetchDashboard = async (): Promise<DashboardData> => {
-  const { data } = await api.get("/api/dashboard");
-  return data.data;
+  const response = await api.get("/api/dashboard");
+  const rawData = response.data; 
+  
+  return {
+    totalPayments: rawData.totalInvested || 0,
+    totalSavings: rawData.savings || 0,
+    mfUnits: rawData.mf || 0,
+    goldGrams: rawData.gold || 0,
+    roundup: 0 
+  };
 }
 
 export default function Dashboard() {
@@ -30,7 +38,6 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <AppLayout>
-        {/* Premium Skeleton Loader */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-pulse">
           {[1, 2, 3].map(i => (
             <div key={i} className="h-32 bg-payae-card rounded-2xl border border-payae-border backdrop-blur-md" />
@@ -40,15 +47,11 @@ export default function Dashboard() {
     )
   }
 
-  if (isError || !data) return <AppLayout><p className="text-red-400">Failed to load data.</p></AppLayout>
+  if (isError || !data) return <AppLayout><p className="text-red-400 p-8">Failed to load data. Please refresh.</p></AppLayout>
 
   return (
     <AppLayout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard title="Total Payments" value={data.totalPayments} prefix="₹" />
         <StatCard title="Total Savings" value={data.totalSavings} prefix="₹" highlight />
         <StatCard title="MF Units" value={data.mfUnits} />

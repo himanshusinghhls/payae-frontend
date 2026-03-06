@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "../api/client";
 import AppLayout from "../components/layout/AppLayout";
 import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDownLeft, Receipt, Loader2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Receipt } from "lucide-react";
 
 type Transaction = {
   id: number;
@@ -13,8 +13,8 @@ type Transaction = {
 };
 
 const fetchLedger = async (): Promise<Transaction[]> => {
-  const { data } = await api.get("/api/transactions"); 
-  return data.data || data;
+  const response = await api.get("/api/transactions"); 
+  return Array.isArray(response.data) ? response.data : [];
 };
 
 export default function Ledger() {
@@ -23,18 +23,8 @@ export default function Ledger() {
     queryFn: fetchLedger,
   });
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, x: -20 },
-    show: { opacity: 1, x: 0 }
-  };
+  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  const item = { hidden: { opacity: 0, x: -20 }, show: { opacity: 1, x: 0 } };
 
   return (
     <AppLayout>
@@ -52,9 +42,7 @@ export default function Ledger() {
 
         {isLoading ? (
           <div className="space-y-4 animate-pulse">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="h-20 bg-payae-card rounded-2xl border border-payae-border" />
-            ))}
+            {[1, 2, 3, 4, 5].map((i) => <div key={i} className="h-20 bg-payae-card rounded-2xl border border-payae-border" />)}
           </div>
         ) : isError ? (
           <div className="text-center p-10 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400">
@@ -67,22 +55,14 @@ export default function Ledger() {
             <p className="text-gray-400">Make your first payment to see your auto-savings here!</p>
           </div>
         ) : (
-          <motion.div 
-            variants={container} 
-            initial="hidden" 
-            animate="show" 
-            className="space-y-4"
-          >
+          <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
             {transactions.map((t, i) => {
-              const isExpense = t.type.includes("PAYMENT");
+              const typeStr = t.type || ""; 
+              const isExpense = typeStr.includes("PAYMENT");
               const Icon = isExpense ? ArrowUpRight : ArrowDownLeft;
               
               return (
-                <motion.div 
-                  key={t.id || i} 
-                  variants={item}
-                  className="bg-payae-card backdrop-blur-xl border border-payae-border p-5 rounded-2xl flex items-center justify-between hover:bg-white/5 transition-colors"
-                >
+                <motion.div key={t.id || i} variants={item} className="bg-payae-card backdrop-blur-xl border border-payae-border p-5 rounded-2xl flex items-center justify-between hover:bg-white/5 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className={`p-3 rounded-xl ${isExpense ? 'bg-red-500/10 text-red-400' : 'bg-payae-success/10 text-payae-success'}`}>
                       <Icon className="w-6 h-6" />
@@ -92,7 +72,8 @@ export default function Ledger() {
                         {isExpense ? 'UPI Payment' : 'Auto Round-Up'}
                       </p>
                       <p className="text-sm text-gray-400 flex items-center gap-2">
-                        <span>{new Date(t.timestamp).toLocaleDateString()}</span>
+                        {/* FIX: Safe date parsing fallback */}
+                        <span>{t.timestamp ? new Date(t.timestamp).toLocaleDateString() : 'Processing...'}</span>
                         {t.assetType && (
                           <>
                             <span className="w-1 h-1 bg-gray-600 rounded-full" />
@@ -104,7 +85,7 @@ export default function Ledger() {
                   </div>
 
                   <div className={`text-xl font-bold ${isExpense ? 'text-white' : 'text-payae-success'}`}>
-                    {isExpense ? '-' : '+'}₹{t.amount.toFixed(2)}
+                    {isExpense ? '-' : '+'}₹{(t.amount || 0).toFixed(2)}
                   </div>
                 </motion.div>
               );

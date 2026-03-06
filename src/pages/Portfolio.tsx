@@ -13,7 +13,7 @@ type PortfolioData = {
 
 const fetchPortfolio = async (): Promise<PortfolioData> => {
   const { data } = await api.get("/api/v1/portfolio");
-  return data.data || data; 
+  return data; 
 };
 
 export default function Portfolio() {
