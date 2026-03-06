@@ -3,17 +3,28 @@ import { Bell, Search, LogOut, User as UserIcon } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import api from "../../api/client";
+
+const fetchProfile = async () => {
+  const response = await api.get("/api/users/me");
+  return response.data;
+};
 
 export default function Topbar() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const savedName = localStorage.getItem('userName'); 
-  const displayEmail = user?.email || "user@payae.com";
-  const actualName = user?.name || savedName || displayEmail.split('@')[0];
-  
+  const { data: profile } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: fetchProfile,
+    staleTime: 300000
+  });
+
+  const displayEmail = profile?.email || "user@payae.com";
+  const actualName = profile?.name || displayEmail.split('@')[0];
   const formattedName = actualName.charAt(0).toUpperCase() + actualName.slice(1);
 
   return (
