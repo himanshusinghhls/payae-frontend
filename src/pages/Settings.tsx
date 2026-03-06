@@ -39,15 +39,14 @@ export default function Settings() {
   const handleSliderChange = (key: keyof AllocationSettings, newValue: number) => {
     const others = Object.keys(settings).filter((k) => k !== key) as Array<keyof AllocationSettings>;
     const remaining = 100 - newValue;
-    const otherTotal = settings[others[0]] + settings[others[1]];
 
     const newSettings = { ...settings, [key]: newValue };
-
-    if (otherTotal === 0) {
+    if (settings[others[0]] + settings[others[1]] === 0) {
       newSettings[others[0]] = Math.floor(remaining / 2);
       newSettings[others[1]] = Math.ceil(remaining / 2);
     } else {
-      newSettings[others[0]] = Math.round((settings[others[0]] / otherTotal) * remaining);
+      const ratio = settings[others[0]] / (settings[others[0]] + settings[others[1]]);
+      newSettings[others[0]] = Math.round(remaining * ratio);
       newSettings[others[1]] = remaining - newSettings[others[0]];
     }
 
