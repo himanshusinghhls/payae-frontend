@@ -1,24 +1,38 @@
-import { motion } from "framer-motion"
+import { motion, useSpring, useTransform } from "framer-motion"
+import { useEffect } from "react"
 
-export default function StatCard({title,value}:{title:string,value:any}){
+interface StatCardProps {
+  title: string;
+  value: number;
+  prefix?: string;
+  highlight?: boolean;
+}
 
-  return(
+export default function StatCard({ title, value, prefix = "", highlight = false }: StatCardProps) {
+  const springValue = useSpring(0, { bounce: 0, duration: 2000 });
+  const displayValue = useTransform(springValue, (current) => 
+    `${prefix}${current % 1 === 0 ? current.toLocaleString() : current.toFixed(2)}`
+  );
 
+  useEffect(() => {
+    springValue.set(value);
+  }, [value, springValue]);
+
+  return (
     <motion.div
-      whileHover={{scale:1.03}}
-      className="bg-white p-6 rounded-xl shadow"
+      whileHover={{ scale: 1.02, y: -4 }}
+      className={`relative p-6 rounded-2xl border backdrop-blur-xl overflow-hidden ${
+        highlight 
+          ? 'bg-gradient-to-br from-payae-card to-payae-success/10 border-payae-success/30 shadow-[0_0_30px_rgba(0,255,148,0.1)]' 
+          : 'bg-payae-card border-payae-border'
+      }`}
     >
-
-      <p className="text-gray-500 text-sm">
+      <p className="text-gray-400 text-sm font-medium tracking-wide uppercase mb-2">
         {title}
       </p>
-
-      <h2 className="text-2xl font-bold mt-2">
-        {value}
-      </h2>
-
+      <motion.h2 className={`text-4xl font-bold tracking-tight ${highlight ? 'text-payae-success' : 'text-white'}`}>
+        {displayValue}
+      </motion.h2>
     </motion.div>
-
   )
-
 }
