@@ -31,7 +31,7 @@ export default function Login() {
     },
     onSuccess: (data) => {
       login(data.token, { email: data.email, name: data.name || "User" });
-      toast.success("Welcome back!");
+      toast.success("Welcome!!");
       navigate("/dashboard");
     },
     onError: () => toast.error("Invalid email or password.")

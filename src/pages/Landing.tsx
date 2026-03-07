@@ -25,9 +25,7 @@ export default function Landing() {
          <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>
             <div className="w-16 h-16 border-4 border-payae-accent border-t-transparent rounded-full animate-spin" />
          </motion.div>
-         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-6 text-payae-accent font-bold tracking-widest uppercase text-sm">
-           Initializing PayAE
-         </motion.p>
+         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-6 text-payae-accent font-bold tracking-widest uppercase text-sm">Initializing PayAE</motion.p>
       </div>
     );
   }
@@ -79,11 +77,12 @@ export default function Landing() {
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="flex-1 relative w-full max-w-md lg:max-w-none h-[500px] hidden md:block" style={{ perspective: "1200px" }}>
-          <motion.div animate={{ y: [0, -20, 0] }} transition={floatMainTransition} className="absolute top-10 left-20 w-72 h-96 bg-gradient-to-b from-white/10 to-black/60 border border-white/20 rounded-[40px] backdrop-blur-3xl p-6 shadow-[0_30px_60px_rgba(0,0,0,0.6)] z-20" style={{ transformStyle: "preserve-3d", transform: "rotateY(-15deg) rotateX(10deg)" }}>
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="flex-1 relative w-full max-w-md lg:max-w-none h-[600px] hidden md:block" style={{ perspective: "1200px" }}>
+          
+          <motion.div animate={{ y: ["-50%", "calc(-50% - 20px)", "-50%"] }} transition={floatMainTransition} className="absolute top-1/2 left-1/2 w-80 h-[420px] bg-gradient-to-b from-white/10 to-black/60 border border-white/20 rounded-[40px] backdrop-blur-3xl p-8 shadow-[0_30px_80px_rgba(0,229,255,0.2)] z-20" style={{ transformStyle: "preserve-3d", transform: "translate(-50%, -50%) rotateY(-15deg) rotateX(10deg)" }}>
             <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
               <span className="text-sm font-bold text-gray-300">UPI Payment</span>
-              <span className="text-xl font-black text-white">₹145.00</span>
+              <span className="text-xl font-black text-white">₹250.00</span>
             </div>
             <div className="space-y-5">
               <div className="h-14 bg-white/5 rounded-2xl border border-white/10 flex items-center px-4 justify-between shadow-inner">
@@ -101,7 +100,7 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          <motion.div animate={{ y: [0, -15, 0] }} transition={floatFastTransition} className="absolute top-0 left-0 bg-black/80 border border-payae-green/30 backdrop-blur-xl p-5 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
+          <motion.div animate={{ y: [0, -15, 0] }} transition={floatFastTransition} className="absolute top-[10%] left-0 bg-black/80 border border-payae-green/30 backdrop-blur-xl p-5 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
              <div className="bg-payae-green/20 p-3 rounded-2xl"><Lock className="text-payae-green w-6 h-6" /></div>
              <div>
                 <p className="text-xs text-gray-400 font-bold uppercase">Secured</p>
@@ -109,15 +108,17 @@ export default function Landing() {
              </div>
           </motion.div>
 
-          <motion.div animate={{ y: [0, 25, 0] }} transition={floatSlowTransition} className="absolute bottom-10 right-10 bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-5 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
+          <motion.div animate={{ y: [0, 25, 0] }} transition={floatSlowTransition} className="absolute bottom-[10%] right-[-5%] bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-5 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
              <div className="bg-payae-accent/20 p-3 rounded-2xl"><TrendingUp className="text-payae-accent w-6 h-6" /></div>
              <div>
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Growth</p>
                 <p className="text-xl font-black text-white">+12.4%</p>
              </div>
           </motion.div>
-          <motion.div animate={{ scale: [1, 1.5], opacity: [0.5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }} className="absolute top-10 left-20 w-80 h-80 border border-payae-accent/20 rounded-full z-10" />
-          <motion.div animate={{ scale: [1, 1.8], opacity: [0.3, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeOut" }} className="absolute top-10 left-20 w-80 h-80 border border-payae-success/20 rounded-full z-10" />
+
+          <motion.div animate={{ scale: [1, 1.5], opacity: [0.5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 border border-payae-accent/20 rounded-full z-0 pointer-events-none" />
+          <motion.div animate={{ scale: [1, 1.8], opacity: [0.3, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeOut" }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 border border-payae-success/20 rounded-full z-0 pointer-events-none" />
+
         </motion.div>
       </div>
 

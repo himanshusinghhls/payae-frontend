@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import api from "../api/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CheckCircle, ShieldCheck, Settings2, Users, AlertCircle, XCircle, Receipt } from "lucide-react";
+import { Loader2, CheckCircle, ShieldCheck, Settings2, AlertCircle, XCircle, Receipt, QrCode, X, Camera } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import AnimatedNumber from "../components/ui/AnimatedNumber";
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 const loadRazorpayScript = () => new Promise((resolve) => {
   const script = document.createElement("script");
@@ -17,16 +18,13 @@ const loadRazorpayScript = () => new Promise((resolve) => {
 
 type RoundUpRule = 'SMART_ALGO' | 'PERCENT_5' | 'PERCENT_10' | 'CUSTOM';
 
-const CONTACTS = [
-  { id: 1, name: "Amazon India", upi: "amazon@apl" },
-  { id: 2, name: "Zomato", upi: "zomato@paytm" },
-  { id: 3, name: "Starbucks", upi: "starbucks@sbi" },
-  { id: 4, name: "Rahul (Friend)", upi: "rahul99@okicici" },
-  { id: 5, name: "College Canteen", upi: "canteen@ybl" }
-];
-
 export default function Payment() {
   const queryClient = useQueryClient(); 
+  
+  const [payeeName, setPayeeName] = useState("");
+  const [payeeUpi, setPayeeUpi] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
+
   const [baseAmount, setBaseAmount] = useState<number | "">("");
   const [roundup, setRoundup] = useState<number>(0);
   const [isRoundUpEnabled, setIsRoundUpEnabled] = useState(() => localStorage.getItem('autoSaveEnabled') !== 'false');
@@ -34,7 +32,6 @@ export default function Payment() {
   const [customPercent, setCustomPercent] = useState<number>(15);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "success" | "failed">("idle");
   const [lastPaidRoundup, setLastPaidRoundup] = useState(0);
-  const [selectedContact, setSelectedContact] = useState(CONTACTS[0]);
 
   const { data: dashboardData } = useQuery({
     queryKey: ['dashboard_balance'],
@@ -66,6 +63,29 @@ export default function Payment() {
   const totalPayable = Number(baseAmount) + roundup;
   const isBalanceLow = totalPayable > currentBalance;
 
+  const handleScan = (result: string) => {
+    try {
+      const url = new URL(result);
+      if (url.protocol === "upi:") {
+        const params = new URLSearchParams(url.search);
+        const pa = params.get("pa");
+        const pn = params.get("pn");
+        const am = params.get("am");
+        
+        if (pa) setPayeeUpi(pa);
+        if (pn) setPayeeName(decodeURIComponent(pn));
+        if (am) setBaseAmount(Number(am));
+        
+        setShowScanner(false);
+        toast.success(`Scanned: ${decodeURIComponent(pn || pa || 'User')}`);
+      } else {
+        toast.error("Not a valid UPI QR Code.");
+      }
+    } catch (e) {
+      toast.error("Could not parse QR code.");
+    }
+  };
+
   const processPayment = useMutation({
     mutationFn: async () => {
       const isLoaded = await loadRazorpayScript();
@@ -82,7 +102,7 @@ export default function Payment() {
           amount: Math.round(totalPayable * 100), 
           currency: "INR",
           name: "PayAE UPI",
-          description: `Paying ${selectedContact.name}`,
+          description: `Paying ${payeeName || payeeUpi || 'User'}`,
           order_id: actualOrderId, 
           theme: { color: "#1c3166" },
           handler: async function (response: any) {
@@ -102,16 +122,9 @@ export default function Payment() {
         const rzp = new (window as any).Razorpay(options);
         
         rzp.on('payment.failed', async function () {
-          try {
-            await api.post("/api/payments/failed", {
-              orderId: actualOrderId,
-              amount: finalBaseAmount,
-              roundUpAmount: finalRoundupAmount
-            });
-          } catch(e) { console.error("Could not log failure"); }
+          try { await api.post("/api/payments/failed", { orderId: actualOrderId, amount: finalBaseAmount, roundUpAmount: finalRoundupAmount }); } catch(e) {}
           reject(new Error("Payment Declined"));
         });
-        
         rzp.open();
       });
     },
@@ -120,6 +133,8 @@ export default function Payment() {
       setPaymentStatus("success");
       setBaseAmount("");
       setRoundup(0);
+      setPayeeName("");
+      setPayeeUpi("");
       await queryClient.invalidateQueries({ queryKey: ['dashboard_balance'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['ledger'] });
@@ -136,11 +151,25 @@ export default function Payment() {
   return (
     <AppLayout>
       <div className="max-w-xl mx-auto mt-6 relative z-10 px-4 md:px-0">
+        
+        <AnimatePresence>
+          {showScanner && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-6">
+              <button onClick={() => setShowScanner(false)} className="absolute top-10 right-10 text-white bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors"><X size={24}/></button>
+              <h2 className="text-white text-2xl font-bold mb-6 flex items-center gap-3"><Camera className="text-payae-accent" /> Scan Any UPI QR</h2>
+              <div className="w-full max-w-sm rounded-3xl overflow-hidden border-4 border-payae-accent shadow-[0_0_50px_rgba(0,229,255,0.3)]">
+                 <Scanner onScan={(result) => handleScan(result[0].rawValue)} formats={['qr_code']} />
+              </div>
+              <p className="text-gray-400 mt-6 text-center">Point your camera at a BharatPe, PhonePe, or Paytm QR code.</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <AnimatePresence mode="wait">
           {paymentStatus === "success" ? (
             <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-black/60 backdrop-blur-3xl border border-payae-green/30 p-8 rounded-3xl text-center shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
               <CheckCircle className="text-payae-green w-16 h-16 mx-auto mb-6" />
-              <h2 className="text-3xl font-bold text-white mb-2">Paid to {selectedContact.name}</h2>
+              <h2 className="text-3xl font-bold text-white mb-2">Payment Successful</h2>
               {lastPaidRoundup > 0 ? <p className="text-gray-400">₹{lastPaidRoundup.toFixed(2)} routed to wealth portfolio!</p> : <p className="text-gray-400">Payment completed.</p>}
             </motion.div>
           ) : paymentStatus === "failed" ? (
@@ -163,11 +192,20 @@ export default function Payment() {
                 </div>
               </div>
 
-              <div className="mb-6">
-                <label className="text-sm text-gray-400 mb-2 block flex items-center gap-2"><Users className="w-4 h-4"/> Select Payee</label>
-                <select onChange={(e) => setSelectedContact(CONTACTS.find(c => c.id === Number(e.target.value)) || CONTACTS[0])} className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white font-semibold focus:border-payae-accent outline-none appearance-none">
-                  {CONTACTS.map(c => <option key={c.id} value={c.id}>{c.name} ({c.upi})</option>)}
-                </select>
+              <div className="mb-6 space-y-4">
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-2 block">Receiver Name (Optional)</label>
+                    <input type="text" placeholder="e.g. Starbucks" value={payeeName} onChange={(e) => setPayeeName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-white focus:border-payae-accent outline-none" />
+                  </div>
+                  <button onClick={() => setShowScanner(true)} className="mt-6 flex items-center justify-center gap-2 bg-payae-accent/10 border border-payae-accent/30 text-payae-accent px-4 rounded-xl hover:bg-payae-accent/20 transition-colors font-bold whitespace-nowrap">
+                    <QrCode size={20} /> Scan
+                  </button>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 uppercase tracking-widest font-bold mb-2 block">UPI ID</label>
+                  <input type="text" placeholder="e.g. name@okhdfc" value={payeeUpi} onChange={(e) => setPayeeUpi(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-white focus:border-payae-accent outline-none" />
+                </div>
               </div>
 
               <div className="mb-6 relative">
@@ -222,7 +260,7 @@ export default function Payment() {
                 )}
               </AnimatePresence>
 
-              <button onClick={() => processPayment.mutate()} disabled={!baseAmount || processPayment.isPending || isBalanceLow} className={`w-full text-white font-bold py-4 rounded-2xl flex justify-center items-center gap-2 transition-all ${isBalanceLow ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-payae-brand to-blue-600 shadow-lg hover:shadow-blue-500/25'}`}>
+              <button onClick={() => processPayment.mutate()} disabled={!baseAmount || !payeeUpi || processPayment.isPending || isBalanceLow} className={`w-full text-white font-bold py-4 rounded-2xl flex justify-center items-center gap-2 transition-all ${!baseAmount || !payeeUpi || isBalanceLow ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-payae-brand to-blue-600 shadow-lg hover:shadow-blue-500/25'}`}>
                 {processPayment.isPending ? <Loader2 className="animate-spin" /> : `Securely Pay ₹${totalPayable.toFixed(2)}`}
               </button>
             </motion.div>
