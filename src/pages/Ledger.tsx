@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import api from "../api/client";
 import AppLayout from "../components/layout/AppLayout";
 import { motion, AnimatePresence } from "framer-motion";
-import { Receipt, ChevronDown, Store, Wallet, PieChart, XCircle } from "lucide-react";
+import { Receipt, ChevronDown, Store, Wallet, PieChart, XCircle, ArrowDownLeft } from "lucide-react";
 
 const formatTimeIST = (timestamp: string) => {
   if (!timestamp) return "";
@@ -37,7 +37,11 @@ export default function Ledger() {
 
   const smartLedger = basePayments.map((payment: any) => {
     const isFailed = payment.type === "PAYMENT_FAILED" || payment.status === "FAILED";
-    if (isFailed) return { ...payment, isFailed, linkedRoundups: [], totalRoundupAmount: 0, totalCharge: payment.amount };
+    const isReceived = payment.type === "PAYMENT_RECEIVED";
+
+    if (isFailed || isReceived) {
+      return { ...payment, isFailed, isReceived, linkedRoundups: [], totalRoundupAmount: 0, totalCharge: payment.amount };
+    }
 
     const pTime = new Date(payment.timestamp).getTime();
     const linkedRoundups = availableInvestments.filter((r: any) => {
@@ -48,7 +52,7 @@ export default function Ledger() {
     availableInvestments = availableInvestments.filter((r: any) => !linkedRoundups.includes(r));
     const totalRoundupAmount = linkedRoundups.reduce((sum: number, r: any) => sum + r.amount, 0);
 
-    return { ...payment, isFailed: false, linkedRoundups, totalRoundupAmount, totalCharge: payment.amount + totalRoundupAmount };
+    return { ...payment, isFailed: false, isReceived: false, linkedRoundups, totalRoundupAmount, totalCharge: payment.amount + totalRoundupAmount };
   });
 
   return (
@@ -57,7 +61,7 @@ export default function Ledger() {
         <div className="flex items-center justify-between mb-6 pb-3 border-b border-white/10">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-white">Smart Ledger</h2>
-            <p className="text-xs text-gray-400 mt-1">Your exact micro-investment distribution.</p>
+            <p className="text-xs text-gray-400 mt-1">Your exact transaction history.</p>
           </div>
           <div className="bg-white/5 p-2.5 rounded-xl border border-white/10 hidden md:block backdrop-blur-md">
             <Receipt className="text-white w-5 h-5" />
@@ -79,33 +83,38 @@ export default function Ledger() {
               const isBaseExpanded = expandedBaseId === payment.id;
               const isWalletExpanded = expandedWalletId === payment.id;
               const displayName = payment.description || payment.payeeName || "UPI Payment";
+              const isInteractive = !payment.isFailed && !payment.isReceived;
 
               return (
                 <motion.div key={payment.id} className="bg-black/40 border border-white/10 rounded-xl overflow-hidden shadow-lg backdrop-blur-xl">
                   
-                  <div className={`p-4 flex items-center justify-between transition-colors ${!payment.isFailed ? 'cursor-pointer hover:bg-white/5' : ''}`} onClick={() => !payment.isFailed && setExpandedBaseId(isBaseExpanded ? null : payment.id)}>
+                  <div className={`p-4 flex items-center justify-between transition-colors ${isInteractive ? 'cursor-pointer hover:bg-white/5' : ''}`} onClick={() => isInteractive && setExpandedBaseId(isBaseExpanded ? null : payment.id)}>
                     <div className="flex items-center gap-3">
                       {payment.isFailed ? (
                         <div className="p-2.5 bg-red-500/10 rounded-lg text-red-500"><XCircle className="w-5 h-5" /></div>
+                      ) : payment.isReceived ? (
+                        <div className="p-2.5 bg-payae-success/10 rounded-lg text-payae-success"><ArrowDownLeft className="w-5 h-5" /></div>
                       ) : (
                         <div className="p-2.5 bg-white/10 rounded-lg text-white"><Store className="w-5 h-5" /></div>
                       )}
                       <div>
-                        <p className={`font-bold text-base ${payment.isFailed ? 'text-red-400' : 'text-white'}`}>
-                          {payment.isFailed ? 'Failed Transaction' : displayName}
+                        <p className={`font-bold text-base ${payment.isFailed ? 'text-red-400' : payment.isReceived ? 'text-payae-success' : 'text-white'}`}>
+                          {payment.isFailed ? 'Failed Transaction' : payment.isReceived ? 'Received Money' : displayName}
                         </p>
-                        <p className="text-[11px] text-gray-400">{formatTimeIST(payment.timestamp)}</p>
+                        <p className="text-[11px] text-gray-400">
+                          {payment.isReceived ? `${displayName} • ${formatTimeIST(payment.timestamp)}` : formatTimeIST(payment.timestamp)}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <div className={`text-lg font-black ${payment.isFailed ? 'text-red-400 line-through opacity-70' : 'text-white'}`}>
-                        -₹{payment.totalCharge.toFixed(2)}
+                      <div className={`text-lg font-black ${payment.isFailed ? 'text-red-400 line-through opacity-70' : payment.isReceived ? 'text-payae-success' : 'text-white'}`}>
+                        {payment.isReceived ? '+' : '-'}₹{payment.totalCharge.toFixed(2)}
                       </div>
-                      {!payment.isFailed && <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isBaseExpanded ? 'rotate-180' : ''}`} />}
+                      {isInteractive && <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isBaseExpanded ? 'rotate-180' : ''}`} />}
                     </div>
                   </div>
 
-                  {!payment.isFailed && (
+                  {isInteractive && (
                     <AnimatePresence>
                       {isBaseExpanded && (
                         <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="bg-black/20 border-t border-white/5 overflow-hidden">

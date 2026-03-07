@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import api from "../api/client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Settings as SettingsIcon, Save, PieChart, CheckCircle2, Loader2, Plus, Minus, Power } from "lucide-react";
+import { Settings as SettingsIcon, Save, PieChart, CheckCircle2, Loader2, Plus, Minus, Power, Wallet, TrendingUp, Coins } from "lucide-react";
 
 type AllocationSettings = {
   savingsPercent: number;
@@ -25,7 +25,6 @@ export default function Settings() {
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
-  
   const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(() => localStorage.getItem('autoSaveEnabled') !== 'false');
 
   const { data: initialSettings, isLoading: isFetching } = useQuery({
@@ -47,7 +46,6 @@ export default function Settings() {
     const newValue = !isAutoSaveEnabled;
     setIsAutoSaveEnabled(newValue);
     localStorage.setItem('autoSaveEnabled', String(newValue));
-    window.dispatchEvent(new Event('autoSaveToggled'));
   };
 
   const adjustValue = (key: keyof AllocationSettings, amount: number) => {
@@ -85,105 +83,113 @@ export default function Settings() {
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto mt-6">
-        <div className="flex items-center gap-3 mb-10 pb-4 border-b border-payae-border">
-          <div className="bg-payae-card p-3 rounded-xl border border-payae-border">
-            <SettingsIcon className="text-white w-6 h-6" />
+      <div className="max-w-4xl mx-auto mt-4">
+        
+        <div className="flex items-center gap-4 mb-8 pb-4 border-b border-white/10">
+          <div className="bg-white/5 p-3 rounded-xl border border-white/10 backdrop-blur-md">
+            <SettingsIcon className="text-payae-accent w-6 h-6" />
           </div>
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-white">Allocation Rules</h2>
-            <p className="text-sm text-gray-400 mt-1">Determine how your round-ups are distributed.</p>
+            <p className="text-xs md:text-sm text-gray-400 mt-1">Determine how your automated round-ups are distributed.</p>
           </div>
         </div>
 
         {isFetching ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-payae-accent w-10 h-10" /></div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-payae-card backdrop-blur-xl border border-payae-border p-6 md:p-8 rounded-3xl shadow-2xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-black/40 backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl">
               
-              <div className="bg-black/40 p-5 rounded-2xl border border-payae-border flex justify-between items-center mb-8">
+              <div className="bg-white/5 p-5 rounded-2xl border border-white/10 flex justify-between items-center mb-8 shadow-inner">
                 <div>
                   <h3 className="text-white font-bold flex items-center gap-2">
                     <Power className={`w-4 h-4 ${isAutoSaveEnabled ? 'text-payae-success' : 'text-gray-500'}`} />
                     Master Auto-Save
                   </h3>
-                  <p className="text-xs text-gray-400 mt-1">Pause all background round-ups.</p>
+                  <p className="text-[11px] text-gray-400 mt-1 uppercase tracking-wider font-semibold">Pause all background routing</p>
                 </div>
                 <button 
                   onClick={toggleMasterSwitch} 
-                  className={`w-14 h-7 rounded-full transition-colors relative flex items-center px-1 ${isAutoSaveEnabled ? 'bg-payae-success' : 'bg-gray-600'}`}
+                  className={`w-14 h-7 rounded-full transition-colors relative flex items-center px-1 shadow-inner ${isAutoSaveEnabled ? 'bg-payae-success' : 'bg-gray-700'}`}
                 >
-                  <motion.div 
-                    layout 
-                    className="w-5 h-5 bg-white rounded-full shadow-md"
-                    animate={{ x: isAutoSaveEnabled ? 28 : 0 }}
-                  />
+                  <motion.div layout className="w-5 h-5 bg-white rounded-full shadow-md" animate={{ x: isAutoSaveEnabled ? 28 : 0 }} />
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className={!isAutoSaveEnabled ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
-                  <label className="text-blue-400 font-semibold flex items-center gap-2 mb-3">
-                    <div className="w-3 h-3 rounded-full bg-blue-500" /> Liquid Savings
+              <div className={`space-y-5 ${!isAutoSaveEnabled ? 'opacity-40 pointer-events-none grayscale-[50%]' : ''} transition-all duration-300`}>
+                
+                <div>
+                  <label className="text-[#00E5FF] text-xs uppercase tracking-widest font-bold flex items-center gap-2 mb-2">
+                    <Wallet className="w-4 h-4" /> Liquid Savings
                   </label>
-                  <div className="flex items-center justify-between bg-black/30 p-2 rounded-xl border border-payae-border">
-                    <button onClick={() => adjustValue("savingsPercent", -5)} className="p-3 bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition-colors"><Minus size={16}/></button>
-                    <span className="text-white font-bold text-xl">{settings.savingsPercent}%</span>
-                    <button onClick={() => adjustValue("savingsPercent", 5)} className="p-3 bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition-colors"><Plus size={16}/></button>
+                  <div className="flex items-center justify-between bg-black/60 p-1.5 rounded-xl border border-white/5 shadow-inner">
+                    <button onClick={() => adjustValue("savingsPercent", -5)} className="p-3 bg-white/5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><Minus size={16}/></button>
+                    <span className="text-white font-black text-xl w-16 text-center">{settings.savingsPercent}%</span>
+                    <button onClick={() => adjustValue("savingsPercent", 5)} className="p-3 bg-white/5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><Plus size={16}/></button>
                   </div>
                 </div>
 
-                <div className={!isAutoSaveEnabled ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
-                  <label className="text-payae-success font-semibold flex items-center gap-2 mb-3">
-                    <div className="w-3 h-3 rounded-full bg-payae-success" /> Mutual Funds
+                <div>
+                  <label className="text-[#00FF94] text-xs uppercase tracking-widest font-bold flex items-center gap-2 mb-2">
+                    <TrendingUp className="w-4 h-4" /> Mutual Funds
                   </label>
-                  <div className="flex items-center justify-between bg-black/30 p-2 rounded-xl border border-payae-border">
-                    <button onClick={() => adjustValue("mutualFundPercent", -5)} className="p-3 bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition-colors"><Minus size={16}/></button>
-                    <span className="text-white font-bold text-xl">{settings.mutualFundPercent}%</span>
-                    <button onClick={() => adjustValue("mutualFundPercent", 5)} className="p-3 bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition-colors"><Plus size={16}/></button>
+                  <div className="flex items-center justify-between bg-black/60 p-1.5 rounded-xl border border-white/5 shadow-inner">
+                    <button onClick={() => adjustValue("mutualFundPercent", -5)} className="p-3 bg-white/5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><Minus size={16}/></button>
+                    <span className="text-white font-black text-xl w-16 text-center">{settings.mutualFundPercent}%</span>
+                    <button onClick={() => adjustValue("mutualFundPercent", 5)} className="p-3 bg-white/5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><Plus size={16}/></button>
                   </div>
                 </div>
 
-                <div className={!isAutoSaveEnabled ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
-                  <label className="text-payae-orange font-semibold flex items-center gap-2 mb-3">
-                    <div className="w-3 h-3 rounded-full bg-payae-orange" /> Digital Gold
+                <div>
+                  <label className="text-[#f58220] text-xs uppercase tracking-widest font-bold flex items-center gap-2 mb-2">
+                    <Coins className="w-4 h-4" /> Digital Gold
                   </label>
-                  <div className="flex items-center justify-between bg-black/30 p-2 rounded-xl border border-payae-border">
-                    <button onClick={() => adjustValue("goldPercent", -5)} className="p-3 bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition-colors"><Minus size={16}/></button>
-                    <span className="text-white font-bold text-xl">{settings.goldPercent}%</span>
-                    <button onClick={() => adjustValue("goldPercent", 5)} className="p-3 bg-gray-800 rounded-lg text-white hover:bg-gray-700 transition-colors"><Plus size={16}/></button>
+                  <div className="flex items-center justify-between bg-black/60 p-1.5 rounded-xl border border-white/5 shadow-inner">
+                    <button onClick={() => adjustValue("goldPercent", -5)} className="p-3 bg-white/5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><Minus size={16}/></button>
+                    <span className="text-white font-black text-xl w-16 text-center">{settings.goldPercent}%</span>
+                    <button onClick={() => adjustValue("goldPercent", 5)} className="p-3 bg-white/5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><Plus size={16}/></button>
                   </div>
                 </div>
               </div>
 
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={saveMutation.isPending || !isAutoSaveEnabled} className="w-full mt-8 bg-white text-black font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 hover:bg-gray-200 transition-colors disabled:opacity-50">
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={saveMutation.isPending || !isAutoSaveEnabled} className="w-full mt-8 bg-gradient-to-r from-payae-accent to-blue-600 text-black font-black py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(0,229,255,0.4)]">
                 {saveMutation.isPending ? <Loader2 className="animate-spin" /> : <Save size={20} />}
                 Save Allocation Rules
               </motion.button>
 
-              {showSuccess && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-3 bg-payae-success/20 border border-payae-success/50 text-payae-success rounded-lg flex items-center justify-center gap-2">
-                  <CheckCircle2 size={18} /> Settings Updated!
-                </motion.div>
-              )}
+              <AnimatePresence>
+                {showSuccess && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-4 p-3 bg-payae-success/10 border border-payae-success/30 text-payae-success rounded-xl flex items-center justify-center gap-2 font-bold text-sm">
+                    <CheckCircle2 size={18} /> Settings Updated!
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-payae-card backdrop-blur-xl border border-payae-border p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center text-center">
-              <PieChart className="text-gray-500 w-16 h-16 mb-6 opacity-50" />
-              <h3 className="text-xl font-bold text-white mb-2">Live Preview</h3>
-              <p className="text-sm text-gray-400 mb-8">How a ₹100 round-up distributes based on your rules.</p>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-black/40 backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center text-center relative overflow-hidden">
+              <div className="absolute top-[-20%] right-[-20%] w-64 h-64 bg-payae-accent/10 rounded-full blur-[80px] pointer-events-none" />
+              
+              <PieChart className="text-gray-500 w-12 h-12 mb-4 opacity-50 relative z-10" />
+              <h3 className="text-xl font-bold text-white mb-2 relative z-10">Live Algorithm Preview</h3>
+              <p className="text-xs text-gray-400 mb-10 max-w-xs relative z-10">This is how a standard <span className="text-white font-bold">₹100</span> round-up will be automatically distributed into your portfolio.</p>
 
-              <div className="w-full h-12 bg-gray-800 rounded-full flex overflow-hidden shadow-inner border border-white/5">
-                <motion.div className="h-full bg-blue-500 flex items-center justify-center text-xs font-bold text-white" animate={{ width: `${settings.savingsPercent}%` }}>
-                  {settings.savingsPercent > 10 ? `₹${settings.savingsPercent}` : ''}
+              <div className="w-full h-8 bg-gray-900 rounded-full flex overflow-hidden shadow-inner border border-white/5 relative z-10">
+                <motion.div className="h-full bg-[#00E5FF] flex items-center justify-center text-[10px] font-bold text-black shadow-[inset_0_0_10px_rgba(0,0,0,0.2)]" animate={{ width: `${settings.savingsPercent}%` }} transition={{ type: "spring", stiffness: 100 }}>
+                  {settings.savingsPercent > 15 ? `₹${settings.savingsPercent}` : ''}
                 </motion.div>
-                <motion.div className="h-full bg-payae-success flex items-center justify-center text-xs font-bold text-black" animate={{ width: `${settings.mutualFundPercent}%` }}>
-                  {settings.mutualFundPercent > 10 ? `₹${settings.mutualFundPercent}` : ''}
+                <motion.div className="h-full bg-[#00FF94] flex items-center justify-center text-[10px] font-bold text-black shadow-[inset_0_0_10px_rgba(0,0,0,0.2)]" animate={{ width: `${settings.mutualFundPercent}%` }} transition={{ type: "spring", stiffness: 100 }}>
+                  {settings.mutualFundPercent > 15 ? `₹${settings.mutualFundPercent}` : ''}
                 </motion.div>
-                <motion.div className="h-full bg-payae-orange flex items-center justify-center text-xs font-bold text-white" animate={{ width: `${settings.goldPercent}%` }}>
-                  {settings.goldPercent > 10 ? `₹${settings.goldPercent}` : ''}
+                <motion.div className="h-full bg-[#f58220] flex items-center justify-center text-[10px] font-bold text-white shadow-[inset_0_0_10px_rgba(0,0,0,0.2)]" animate={{ width: `${settings.goldPercent}%` }} transition={{ type: "spring", stiffness: 100 }}>
+                  {settings.goldPercent > 15 ? `₹${settings.goldPercent}` : ''}
                 </motion.div>
+              </div>
+
+              <div className="w-full flex justify-between mt-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2 relative z-10">
+                 <span>0%</span>
+                 <span>100%</span>
               </div>
             </motion.div>
           </div>

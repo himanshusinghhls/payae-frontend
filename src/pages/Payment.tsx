@@ -113,7 +113,8 @@ export default function Payment() {
                 signature: response.razorpay_signature,
                 amount: finalBaseAmount, 
                 roundUpAmount: finalRoundupAmount,
-                payeeName: payeeName || payeeUpi || "Unknown Payee"
+                payeeName: payeeName || payeeUpi || "Unknown Payee",
+                payeeUpi: payeeUpi
               });
               resolve({ successRoundup: finalRoundupAmount });
             } catch (err) { reject(err); }
