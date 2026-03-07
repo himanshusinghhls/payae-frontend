@@ -100,18 +100,18 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          <motion.div animate={{ y: [0, -15, 0] }} transition={floatFastTransition} className="absolute top-[10%] left-0 bg-black/80 border border-payae-green/30 backdrop-blur-xl p-5 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
-             <div className="bg-payae-green/20 p-3 rounded-2xl"><Lock className="text-payae-green w-6 h-6" /></div>
+          <motion.div animate={{ y: [0, -15, 0] }} transition={floatFastTransition} className="absolute top-[15%] left-[5%] bg-black/80 border border-payae-green/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
+             <div className="bg-payae-green/20 p-3 rounded-2xl"><Lock className="text-payae-green w-5 h-5" /></div>
              <div>
-                <p className="text-xs text-gray-400 font-bold uppercase">Secured</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Secured</p>
                 <p className="text-sm font-bold text-white">256-bit Encryption</p>
              </div>
           </motion.div>
 
-          <motion.div animate={{ y: [0, 25, 0] }} transition={floatSlowTransition} className="absolute bottom-[10%] right-[-5%] bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-5 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
-             <div className="bg-payae-accent/20 p-3 rounded-2xl"><TrendingUp className="text-payae-accent w-6 h-6" /></div>
+          <motion.div animate={{ y: [0, 25, 0] }} transition={floatSlowTransition} className="absolute bottom-[15%] right-[5%] bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
+             <div className="bg-payae-accent/20 p-3 rounded-2xl"><TrendingUp className="text-payae-accent w-5 h-5" /></div>
              <div>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Growth</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Growth</p>
                 <p className="text-xl font-black text-white">+12.4%</p>
              </div>
           </motion.div>
