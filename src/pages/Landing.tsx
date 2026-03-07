@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, Transition } from "framer-motion";
+import { motion, Transition, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Zap, TrendingUp, Sparkles, Building2, Calculator, ArrowUpRight, Lock } from "lucide-react";
 
@@ -18,6 +18,27 @@ export default function Landing() {
   const floatMainTransition: Transition = { duration: 4, repeat: Infinity, ease: "easeInOut" };
   const floatFastTransition: Transition = { duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 };
   const floatSlowTransition: Transition = { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 };
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 150, damping: 20 });
+  const springY = useSpring(mouseY, { stiffness: 150, damping: 20 });
+  const rotateY = useTransform(springX, [-0.5, 0, 0.5], ["-30deg", "-15deg", "0deg"]);
+  const rotateX = useTransform(springY, [-0.5, 0, 0.5], ["25deg", "10deg", "-5deg"]);
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseXPos = e.clientX - rect.left;
+    const mouseYPos = e.clientY - rect.top;
+    
+    mouseX.set(mouseXPos / width - 0.5);
+    mouseY.set(mouseYPos / height - 0.5);
+  };
+
+  const handleMouseLeave = () => {
+    mouseX.set(0);
+    mouseY.set(0);
+  };
 
   if (loading) {
     return (
@@ -80,17 +101,21 @@ export default function Landing() {
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="flex-1 relative w-full h-[600px] hidden lg:flex items-center justify-center" style={{ perspective: "1200px" }}>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }} 
+          animate={{ opacity: 1, scale: 1 }} 
+          transition={{ duration: 1 }} 
+          className="flex-1 relative w-full max-w-md lg:max-w-none h-[600px] hidden md:block" 
+          style={{ perspective: "1200px" }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
           
-          <motion.div animate={{ scale: [1, 1.5], opacity: [0.5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }} className="absolute w-80 h-80 border border-payae-accent/20 rounded-full z-0 pointer-events-none" />
-          <motion.div animate={{ scale: [1, 1.8], opacity: [0.3, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeOut" }} className="absolute w-80 h-80 border border-payae-success/20 rounded-full z-0 pointer-events-none" />
-
-          <div className="absolute z-20" style={{ transformStyle: "preserve-3d", transform: "rotateY(-15deg) rotateX(10deg)" }}>
+          <motion.div animate={{ y: ["-50%", "calc(-50% - 20px)", "-50%"] }} transition={floatMainTransition} className="absolute top-1/2 left-1/2 w-80 h-[420px] z-20 pointer-events-none" style={{ transform: "translate(-50%, -50%)" }}>
             <motion.div 
-              animate={{ y: [0, -20, 0] }} 
-              transition={floatMainTransition}
-              whileHover={{ scale: 1.03, boxShadow: "0 0 50px rgba(0,229,255,0.4)", rotateY: 0, rotateX: 0 }}
-              className="w-80 h-[420px] bg-gradient-to-b from-white/10 to-black/60 border border-white/20 rounded-[40px] backdrop-blur-3xl p-8 shadow-[0_30px_80px_rgba(0,0,0,0.6)] cursor-pointer transition-all duration-300" 
+              style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+              className="w-full h-full bg-gradient-to-b from-white/10 to-black/60 border border-white/20 rounded-[40px] backdrop-blur-3xl p-8 shadow-[0_30px_80px_rgba(0,229,255,0.15)] pointer-events-auto cursor-crosshair"
+              whileHover={{ scale: 1.05, boxShadow: "0 0 60px rgba(0,229,255,0.4)", transition: { duration: 0.15, ease: "easeOut" } }}
             >
               <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
                 <span className="text-sm font-bold text-gray-300">UPI Payment</span>
@@ -111,33 +136,36 @@ export default function Landing() {
                 </div>
               </div>
             </motion.div>
-          </div>
-
-          <motion.div 
-            animate={{ y: [0, -15, 0] }} 
-            transition={floatFastTransition} 
-            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(0,255,148,0.4)" }}
-            className="absolute top-[15%] left-[5%] xl:left-[10%] bg-black/80 border border-payae-green/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl z-30 flex items-center gap-4 cursor-pointer"
-          >
-             <div className="bg-payae-green/20 p-3 rounded-2xl"><Lock className="text-payae-green w-5 h-5" /></div>
-             <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Secured</p>
-                <p className="text-sm font-bold text-white">256-bit Encryption</p>
-             </div>
           </motion.div>
 
-          <motion.div 
-            animate={{ y: [0, 25, 0] }} 
-            transition={floatSlowTransition} 
-            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(245,130,32,0.4)" }}
-            className="absolute bottom-[15%] right-[5%] xl:right-[10%] bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl z-30 flex items-center gap-4 cursor-pointer"
-          >
-             <div className="bg-payae-accent/20 p-3 rounded-2xl"><TrendingUp className="text-payae-accent w-5 h-5" /></div>
-             <div>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Growth</p>
-                <p className="text-xl font-black text-white">+12.4%</p>
-             </div>
+          <motion.div animate={{ y: [0, -15, 0] }} transition={floatFastTransition} className="absolute top-[15%] left-[5%] xl:left-[10%] z-30">
+            <motion.div 
+              whileHover={{ scale: 1.1, boxShadow: "0 0 30px rgba(0,255,148,0.5)", transition: { duration: 0.1, ease: "easeOut" } }}
+              className="bg-black/80 border border-payae-green/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl flex items-center gap-4 cursor-pointer"
+            >
+               <div className="bg-payae-green/20 p-3 rounded-2xl"><Lock className="text-payae-green w-5 h-5" /></div>
+               <div>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Secured</p>
+                  <p className="text-sm font-bold text-white">256-bit Encryption</p>
+               </div>
+            </motion.div>
           </motion.div>
+
+          <motion.div animate={{ y: [0, 25, 0] }} transition={floatSlowTransition} className="absolute bottom-[15%] right-[5%] xl:right-[10%] z-30">
+             <motion.div 
+              whileHover={{ scale: 1.1, boxShadow: "0 0 30px rgba(245,130,32,0.5)", transition: { duration: 0.1, ease: "easeOut" } }}
+              className="bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl flex items-center gap-4 cursor-pointer"
+             >
+               <div className="bg-payae-accent/20 p-3 rounded-2xl"><TrendingUp className="text-payae-accent w-5 h-5" /></div>
+               <div>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Growth</p>
+                  <p className="text-xl font-black text-white">+12.4%</p>
+               </div>
+             </motion.div>
+          </motion.div>
+
+          <motion.div animate={{ scale: [1, 1.5], opacity: [0.5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 border border-payae-accent/20 rounded-full z-0 pointer-events-none" />
+          <motion.div animate={{ scale: [1, 1.8], opacity: [0.3, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeOut" }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 border border-payae-success/20 rounded-full z-0 pointer-events-none" />
 
         </motion.div>
       </div>
