@@ -52,26 +52,26 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto space-y-8 relative">
+      <div className="max-w-7xl mx-auto space-y-6 relative mt-2">
         <AnimatePresence>
           {showTopUpModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowTopUpModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-              <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-payae-card border border-white/10 p-8 rounded-3xl shadow-2xl w-full max-w-md z-10">
+              <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-payae-card border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md z-10">
                 <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
-                <h3 className="text-2xl font-bold text-white mb-2">Top Up Wallet</h3>
-                <p className="text-gray-400 text-sm mb-6">Add virtual funds to continue simulating transactions.</p>
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Top Up Wallet</h3>
+                <p className="text-gray-400 text-xs md:text-sm mb-6">Add virtual funds to continue simulating transactions.</p>
                 
                 <div className="mb-6">
-                  <div className="flex justify-between text-sm text-gray-400 mb-2">
+                  <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2">
                     <span>Amount</span>
                     <span className="text-white font-bold">₹{topUpAmount}</span>
                   </div>
                   <input type="range" min="100" max="10000" step="100" value={topUpAmount} onChange={(e) => setTopUpAmount(Number(e.target.value))} className="w-full accent-payae-accent" />
-                  <div className="flex justify-between text-xs text-gray-500 mt-2"><span>₹100</span><span>₹10,000</span></div>
+                  <div className="flex justify-between text-[10px] md:text-xs text-gray-500 mt-2"><span>₹100</span><span>₹10,000</span></div>
                 </div>
 
-                <button onClick={() => topUpMutation.mutate()} disabled={topUpMutation.isPending} className="w-full bg-gradient-to-r from-payae-accent to-blue-500 text-black font-bold py-3 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center">
+                <button onClick={() => topUpMutation.mutate()} disabled={topUpMutation.isPending} className="w-full bg-gradient-to-r from-payae-accent to-blue-500 text-black font-bold py-3 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center text-sm md:text-base">
                   {topUpMutation.isPending ? <Loader2 className="animate-spin" /> : `Add ₹${topUpAmount}`}
                 </button>
               </motion.div>
@@ -79,56 +79,59 @@ export default function Dashboard() {
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          <motion.div className="bg-gradient-to-br from-payae-card to-black border border-payae-orange/30 p-6 rounded-3xl shadow-[0_0_30px_rgba(245,130,32,0.1)] relative overflow-hidden group">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5">
+          <motion.div className="bg-gradient-to-br from-payae-card to-black border border-payae-orange/30 p-5 rounded-2xl shadow-[0_0_30px_rgba(245,130,32,0.1)] relative overflow-hidden group flex flex-col justify-center">
             <div className="absolute -right-10 -top-10 w-32 h-32 bg-payae-orange/10 rounded-full blur-2xl transition-all" />
-            <div className="flex justify-between items-start relative z-10">
+            <div className="flex justify-between items-center relative z-10">
               <div>
-                <p className="text-sm text-gray-400 font-semibold mb-1">Virtual Bank Balance</p>
-                <h3 className="text-3xl font-black text-white"><AnimatedNumber value={data.bankBalance} /></h3>
+                <p className="text-xs text-gray-400 font-semibold mb-1 uppercase tracking-widest">Virtual Balance</p>
+                <h3 className="text-2xl font-black text-white"><AnimatedNumber value={data.bankBalance} /></h3>
               </div>
-              <button onClick={() => setShowTopUpModal(true)} className="w-10 h-10 bg-payae-orange/20 text-payae-orange rounded-xl flex items-center justify-center hover:bg-payae-orange hover:text-black transition-colors">
-                <Plus className="w-5 h-5" />
+              <button onClick={() => setShowTopUpModal(true)} className="w-9 h-9 bg-payae-orange/20 text-payae-orange rounded-xl flex items-center justify-center hover:bg-payae-orange hover:text-black transition-colors shrink-0">
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           </motion.div>
+          
           <StatCard title="Total Payments" value={data.totalPayments} prefix="₹" />
           <StatCard title="Liquid Savings" value={data.totalSavings} prefix="₹" highlight />
           <StatCard title="Mutual Fund Units" value={data.mfUnits} />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-3xl shadow-2xl relative overflow-hidden h-[400px] flex flex-col">
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
+          <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-5 rounded-2xl shadow-xl relative overflow-hidden h-[320px] flex flex-col">
             <PortfolioChart />
           </motion.div>
           
-          <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-3xl shadow-2xl h-[400px] flex flex-col justify-between">
+          <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-5 rounded-2xl shadow-xl h-[320px] flex flex-col justify-between">
             <div>
-              <h2 className="text-xl font-bold mb-1 text-white flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-payae-accent animate-pulse" /> Portfolio Distribution
+              <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-payae-accent animate-pulse" /> Portfolio Distribution
               </h2>
-              <p className="text-gray-400 text-sm mb-6">Total Value: <span className="text-white font-bold">₹{totalWealth.toFixed(2)}</span></p>
-              <div className="w-full h-6 bg-gray-800 rounded-full flex overflow-hidden shadow-inner border border-white/5 mb-8">
+              <p className="text-gray-400 text-xs mb-4">Total Value: <span className="text-white font-bold">₹{totalWealth.toFixed(2)}</span></p>
+              
+              <div className="w-full h-3.5 bg-gray-800 rounded-full flex overflow-hidden shadow-inner border border-white/5 mb-5">
                 <motion.div initial={{ width: 0 }} animate={{ width: `${savPct}%` }} transition={{ duration: 1 }} className="h-full bg-[#00E5FF]" />
                 <motion.div initial={{ width: 0 }} animate={{ width: `${mfPct}%` }} transition={{ duration: 1, delay: 0.2 }} className="h-full bg-[#00FF94]" />
                 <motion.div initial={{ width: 0 }} animate={{ width: `${goldPct}%` }} transition={{ duration: 1, delay: 0.4 }} className="h-full bg-[#f58220]" />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-               <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                  <Wallet className="text-[#00E5FF] w-6 h-6 mb-2" />
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Savings</p>
-                  <p className="text-lg font-black text-white">₹{data.totalSavings.toFixed(2)}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+               <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center justify-center text-center">
+                  <Wallet className="text-[#00E5FF] w-5 h-5 mb-1.5" />
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Savings</p>
+                  <p className="text-base font-black text-white">₹{data.totalSavings.toFixed(2)}</p>
                </div>
-               <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                  <TrendingUp className="text-[#00FF94] w-6 h-6 mb-2" />
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Mutal Funds</p>
-                  <p className="text-lg font-black text-white">₹{data.mfUnits.toFixed(2)}</p>
+               <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center justify-center text-center">
+                  <TrendingUp className="text-[#00FF94] w-5 h-5 mb-1.5" />
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Mutual Funds</p>
+                  <p className="text-base font-black text-white">₹{data.mfUnits.toFixed(2)}</p>
                </div>
-               <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                  <Coins className="text-[#f58220] w-6 h-6 mb-2" />
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Digital Gold</p>
-                  <p className="text-lg font-black text-white">₹{goldValue.toFixed(2)}</p>
+               <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center justify-center text-center">
+                  <Coins className="text-[#f58220] w-5 h-5 mb-1.5" />
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Digital Gold</p>
+                  <p className="text-base font-black text-white">₹{goldValue.toFixed(2)}</p>
                </div>
             </div>
           </motion.div>

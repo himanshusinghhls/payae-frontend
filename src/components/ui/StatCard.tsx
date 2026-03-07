@@ -30,7 +30,7 @@ export default function StatCard({ title, value, prefix = "", highlight = false 
       <p className="text-gray-400 text-sm font-medium tracking-wide uppercase mb-2">
         {title}
       </p>
-      <motion.h2 className={`text-4xl font-bold tracking-tight ${highlight ? 'text-payae-success' : 'text-white'}`}>
+      <motion.h2 className={`text-2xl font-bold tracking-tight ${highlight ? 'text-payae-success' : 'text-white'}`}>
         {displayValue}
       </motion.h2>
     </motion.div>
