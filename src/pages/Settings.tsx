@@ -100,10 +100,8 @@ export default function Settings() {
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-payae-accent w-10 h-10" /></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left Column: Interactive Buttons */}
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-payae-card backdrop-blur-xl border border-payae-border p-6 md:p-8 rounded-3xl shadow-2xl">
               
-              {/* MASTER SWITCH UI */}
               <div className="bg-black/40 p-5 rounded-2xl border border-payae-border flex justify-between items-center mb-8">
                 <div>
                   <h3 className="text-white font-bold flex items-center gap-2">
@@ -125,7 +123,6 @@ export default function Settings() {
               </div>
 
               <div className="space-y-6">
-                {/* Savings Control */}
                 <div className={!isAutoSaveEnabled ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
                   <label className="text-blue-400 font-semibold flex items-center gap-2 mb-3">
                     <div className="w-3 h-3 rounded-full bg-blue-500" /> Liquid Savings
@@ -137,7 +134,6 @@ export default function Settings() {
                   </div>
                 </div>
 
-                {/* Mutual Fund Control */}
                 <div className={!isAutoSaveEnabled ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
                   <label className="text-payae-success font-semibold flex items-center gap-2 mb-3">
                     <div className="w-3 h-3 rounded-full bg-payae-success" /> Mutual Funds
@@ -149,7 +145,6 @@ export default function Settings() {
                   </div>
                 </div>
 
-                {/* Gold Control */}
                 <div className={!isAutoSaveEnabled ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
                   <label className="text-payae-orange font-semibold flex items-center gap-2 mb-3">
                     <div className="w-3 h-3 rounded-full bg-payae-orange" /> Digital Gold
@@ -174,7 +169,6 @@ export default function Settings() {
               )}
             </motion.div>
 
-            {/* Right Column: Visual Preview */}
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-payae-card backdrop-blur-xl border border-payae-border p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center text-center">
               <PieChart className="text-gray-500 w-16 h-16 mb-6 opacity-50" />
               <h3 className="text-xl font-bold text-white mb-2">Live Preview</h3>

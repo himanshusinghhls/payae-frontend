@@ -185,7 +185,6 @@ export default function Payment() {
                 </div>
               </div>
 
-              {/* Payee Dropdown */}
               <div className="mb-6">
                 <label className="text-sm text-gray-400 mb-2 block flex items-center gap-2"><Users className="w-4 h-4"/> Select Payee</label>
                 <select 
@@ -198,7 +197,6 @@ export default function Payment() {
                 </select>
               </div>
 
-              {/* Amount Input */}
               <div className="mb-6 relative">
                 <span className="absolute left-4 top-4 text-gray-400 text-xl font-bold">₹</span>
                 <input type="number" placeholder="Enter amount" value={baseAmount} 
@@ -206,7 +204,6 @@ export default function Payment() {
                 className="w-full bg-black/20 border border-payae-border rounded-2xl py-4 pl-10 pr-4 text-white text-2xl font-bold focus:border-payae-accent outline-none" />
               </div>
 
-              {/* Auto-Invest Rules */}
               {Number(baseAmount) > 0 && (
                  <div className="bg-gradient-to-r from-payae-card to-white/5 border border-payae-border p-5 rounded-2xl mb-8">
                      <div className="flex justify-between items-center mb-4">
@@ -231,7 +228,6 @@ export default function Payment() {
                           ))}
                          </div>
 
-                         {/* THE RESTORED CUSTOM PERCENTAGE SLIDER */}
                          <AnimatePresence>
                            {activeRule === 'CUSTOM' && (
                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
@@ -252,8 +248,7 @@ export default function Payment() {
                      )}
                  </div>
               )}
-
-              {/* Low Balance Warning */}
+              
               <AnimatePresence>
                 {isBalanceLow && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-6 flex items-center gap-2 text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20">

@@ -69,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login, 
       logout 
     }}>
-      {/* Don't render the app until we know if the user is logged in or not */}
       {!isLoading && children}
     </AuthContext.Provider>
   );

@@ -23,17 +23,17 @@ export default function Ledger() {
     .filter((t: any) => t.type?.includes("PAYMENT"))
     .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-  let availableRoundups = transactions.filter((t: any) => !t.type?.includes("PAYMENT"));
+  let availableInvestments = transactions.filter((t: any) => t.type === "INVESTMENT");
 
   const smartLedger = basePayments.map((payment: any) => {
     const pTime = new Date(payment.timestamp).getTime();
     
-    const linkedRoundups = availableRoundups.filter((r: any) => {
+    const linkedRoundups = availableInvestments.filter((r: any) => {
       const rTime = new Date(r.timestamp).getTime();
       return rTime >= pTime && rTime <= pTime + 10000;
     });
 
-    availableRoundups = availableRoundups.filter((r: any) => !linkedRoundups.includes(r));
+    availableInvestments = availableInvestments.filter((r: any) => !linkedRoundups.includes(r));
     
     const totalRoundupAmount = linkedRoundups.reduce((sum: number, r: any) => sum + r.amount, 0);
 
@@ -48,24 +48,23 @@ export default function Ledger() {
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto mt-6">
-        
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-payae-border">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-white">Smart Ledger</h2>
-            <p className="text-sm text-gray-400 mt-1">Drill down into your automated wealth distribution.</p>
+            <p className="text-sm text-gray-400 mt-1">Your exact micro-investment distribution.</p>
           </div>
-          <div className="bg-payae-card p-3 rounded-xl border border-payae-border hidden md:block">
-            <Receipt className="text-payae-accent w-6 h-6" />
+          <div className="bg-white/5 p-3 rounded-xl border border-white/10 hidden md:block backdrop-blur-md">
+            <Receipt className="text-white w-6 h-6" />
           </div>
         </div>
 
         {isLoading ? (
           <div className="space-y-3 animate-pulse">
-            {[1, 2, 3].map((i) => <div key={i} className="h-20 bg-payae-card rounded-xl border border-payae-border" />)}
+            {[1, 2, 3].map((i) => <div key={i} className="h-20 bg-white/5 rounded-xl border border-white/10" />)}
           </div>
         ) : isError || smartLedger.length === 0 ? (
-          <div className="text-center p-16 bg-payae-card border border-payae-border rounded-2xl">
-            <Receipt className="mx-auto text-gray-600 w-12 h-12 mb-4" />
+          <div className="text-center p-16 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+            <Receipt className="mx-auto text-gray-500 w-12 h-12 mb-4" />
             <h3 className="text-xl font-medium text-white mb-2">No transactions yet</h3>
           </div>
         ) : (
@@ -75,12 +74,11 @@ export default function Ledger() {
               const isWalletExpanded = expandedWalletId === payment.id;
 
               return (
-                <motion.div key={payment.id} className="bg-payae-card border border-payae-border rounded-xl overflow-hidden shadow-lg">
+                <motion.div key={payment.id} className="bg-black/40 border border-white/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-xl">
                   
-                  {/* TIER 1: Total Deducted */}
                   <div className="p-5 flex items-center justify-between cursor-pointer hover:bg-white/5 transition-colors" onClick={() => setExpandedBaseId(isBaseExpanded ? null : payment.id)}>
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-gray-800 rounded-lg text-white"><Store className="w-5 h-5" /></div>
+                      <div className="p-3 bg-white/10 rounded-xl text-white"><Store className="w-5 h-5" /></div>
                       <div>
                         <p className="font-bold text-white text-lg">UPI Payment</p>
                         <p className="text-xs text-gray-400">{new Date(payment.timestamp).toLocaleString()}</p>
@@ -92,19 +90,18 @@ export default function Ledger() {
                     </div>
                   </div>
 
-                  {/* TIER 2: Split */}
                   <AnimatePresence>
                     {isBaseExpanded && (
-                      <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="bg-black/40 border-t border-payae-border overflow-hidden">
+                      <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="bg-black/20 border-t border-white/5 overflow-hidden">
                         <div className="p-4 pl-16 flex justify-between items-center border-b border-white/5">
-                          <span className="text-gray-300 font-medium text-sm">Sent to Receiver</span>
-                          <span className="text-gray-300 font-bold">-₹{payment.amount.toFixed(2)}</span>
+                          <span className="text-gray-400 font-medium text-sm">Sent to Receiver</span>
+                          <span className="text-white font-bold">-₹{payment.amount.toFixed(2)}</span>
                         </div>
 
                         <div className="p-4 pl-16 flex justify-between items-center cursor-pointer hover:bg-white/5 transition-colors group" onClick={() => setExpandedWalletId(isWalletExpanded ? null : payment.id)}>
                           <div className="flex items-center gap-2">
                             <Wallet className="w-4 h-4 text-payae-accent" />
-                            <span className="text-payae-accent font-bold text-sm">Routed to PayAE Wallet</span>
+                            <span className="text-payae-accent font-bold text-sm">PayAE Auto-Invest</span>
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="text-payae-success font-black">+₹{payment.totalRoundupAmount.toFixed(2)}</span>
@@ -112,10 +109,9 @@ export default function Ledger() {
                           </div>
                         </div>
 
-                        {/* TIER 3: Assets */}
                         <AnimatePresence>
                           {isWalletExpanded && (
-                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-black/60 p-4 pl-24 flex flex-col gap-2">
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-black/40 p-4 pl-24 flex flex-col gap-3">
                               {payment.linkedRoundups.length > 0 ? payment.linkedRoundups.map((r: any) => (
                                 <div key={r.id} className="flex justify-between items-center text-xs">
                                   <span className="text-gray-400 uppercase tracking-widest flex items-center gap-2">
@@ -124,7 +120,7 @@ export default function Ledger() {
                                   <span className="text-white font-bold">₹{r.amount.toFixed(2)}</span>
                                 </div>
                               )) : (
-                                <span className="text-gray-500 text-xs italic">No round-up for this transaction.</span>
+                                <span className="text-gray-500 text-xs italic">No investments for this transaction.</span>
                               )}
                             </motion.div>
                           )}

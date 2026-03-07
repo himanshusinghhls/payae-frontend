@@ -54,7 +54,6 @@ export default function Portfolio() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Chart Section */}
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="lg:col-span-1 bg-payae-card backdrop-blur-xl border border-payae-border p-6 rounded-3xl shadow-2xl h-[400px] flex flex-col">
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 shrink-0">
               <PieChart className="w-5 h-5 text-payae-accent" /> Asset Split
@@ -64,7 +63,6 @@ export default function Portfolio() {
             </div>
           </motion.div>
 
-          {/* Distribution Overview Section */}
           <motion.div variants={containerVariants} initial="hidden" animate="show" className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
             
             <motion.div variants={itemVariants} className="bg-gradient-to-br from-blue-900/40 to-payae-card border border-blue-500/30 p-6 rounded-3xl flex flex-col justify-between hover:border-blue-500/60 transition-colors">

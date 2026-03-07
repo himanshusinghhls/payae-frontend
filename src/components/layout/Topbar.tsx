@@ -41,7 +41,6 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
     <div className="h-20 backdrop-blur-md bg-payae-bg/80 border-b border-payae-border flex items-center justify-between px-4 md:px-8 sticky top-0 z-30">
       
       <div className="flex items-center gap-4">
-        {/* Mobile Hamburger Menu */}
         <button onClick={onMenuClick} className="md:hidden text-gray-400 hover:text-white transition-colors">
           <Menu className="w-6 h-6" />
         </button>
@@ -67,8 +66,8 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           
           <AnimatePresence>
             {showNotifications && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-[-40px] md:right-0 mt-4 w-72 bg-payae-card border border-payae-border backdrop-blur-xl rounded-2xl shadow-2xl p-4 z-40">
-                <h3 className="text-white font-bold mb-3 border-b border-payae-border pb-2">Notifications</h3>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-[-40px] md:right-0 mt-4 w-72 bg-black/60 border border-white/10 backdrop-blur-3xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-4 z-40">
+                <h3 className="text-white font-bold mb-3 border-b border-white/10 pb-2">Notifications</h3>
                 <p className="text-sm text-gray-400">All caught up! No new alerts.</p>
               </motion.div>
             )}
@@ -82,8 +81,8 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
           <AnimatePresence>
             {showProfileMenu && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-56 bg-payae-card border border-payae-border backdrop-blur-xl rounded-2xl shadow-2xl p-2 z-40 overflow-hidden">
-                <div className="p-3 border-b border-payae-border mb-2">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-56 bg-black/60 border border-white/10 backdrop-blur-3xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-2 z-40 overflow-hidden">
+                <div className="p-3 border-b border-white/10 mb-2">
                   <p className="text-white font-bold text-sm truncate">{formattedName}</p>
                   <p className="text-gray-400 text-xs truncate">{displayEmail}</p>
                 </div>

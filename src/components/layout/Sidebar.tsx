@@ -29,7 +29,6 @@ export default function Sidebar() {
   return (
     <div className="w-72 bg-black/20 backdrop-blur-xl border-r border-payae-border h-screen flex flex-col relative z-20">
       
-      {/* Brand Header */}
       <div className="p-8 pb-10">
         <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-1">
           Pay<span className="text-payae-orange">A</span>
@@ -41,7 +40,6 @@ export default function Sidebar() {
         </p>
       </div>
 
-      {/* Navigation Links */}
       <nav className="flex-1 px-4 space-y-2">
         {navItems.map((item) => (
           <NavLink
@@ -61,7 +59,6 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Logout Footer */}
       <div className="p-4 border-t border-payae-border">
         <button 
           onClick={handleLogout}

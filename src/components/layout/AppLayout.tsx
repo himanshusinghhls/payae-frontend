@@ -22,16 +22,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }} 
       />
 
-      {/* Desktop Sidebar (Hidden on mobile) */}
       <div className="hidden md:flex">
         <Sidebar />
       </div>
 
-      {/* Mobile Sidebar Drawer */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            {/* Dark Overlay to click-away */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -40,7 +37,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
             />
             
-            {/* Sliding Drawer */}
             <motion.div 
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
@@ -56,11 +52,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col relative h-screen">
-        {/* Subtle ambient background glows */}
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-payae-accent/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-payae-success/10 rounded-full blur-[120px] pointer-events-none" />
         
-        {/* Pass the open function to the Topbar */}
         <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} />
         
         <motion.div 
