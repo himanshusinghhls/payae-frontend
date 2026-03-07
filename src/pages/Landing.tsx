@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, ShieldCheck, Zap, TrendingUp, Sparkles, Building2 } from "lucide-react";
+import { ArrowRight, ShieldCheck, Zap, TrendingUp, Sparkles, Building2, Calculator, ArrowUpRight } from "lucide-react";
 
 export default function Landing() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [monthlySpend, setMonthlySpend] = useState(15000);
+  const monthlyInvested = monthlySpend * 0.08;
+  const yearlyProjection = (monthlyInvested * 12) * 1.10;
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
-  const floatAnimation = {
-    y: [0, -20, 0],
-    transition: { duration: 4, repeat: Infinity, ease: "easeInOut" as const }
-  };
+  const floatAnimation = { y: [0, -20, 0], transition: { duration: 4, repeat: Infinity, ease: "easeInOut" as const } };
 
   if (loading) {
     return (
@@ -48,39 +48,41 @@ export default function Landing() {
           <button onClick={() => navigate('/login')} className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">
             Login
           </button>
-          <button onClick={() => navigate('/login')} className="bg-payae-accent/10 text-payae-accent hover:bg-payae-accent hover:text-black border border-payae-accent/20 px-5 py-2 rounded-full text-sm font-bold transition-all backdrop-blur-md">
+          <button onClick={() => navigate('/register')} className="bg-payae-accent/10 text-payae-accent hover:bg-payae-accent hover:text-black border border-payae-accent/20 px-5 py-2 rounded-full text-sm font-bold transition-all backdrop-blur-md">
             Register
           </button>
         </div>
       </nav>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 flex flex-col lg:flex-row items-center gap-16 min-h-[calc(100vh-200px)]">
-        
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-20 flex flex-col lg:flex-row items-center gap-16">
         <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="flex-1 text-center lg:text-left">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-payae-accent/10 border border-payae-accent/20 text-payae-accent text-sm font-bold mb-6">
             <Sparkles className="w-4 h-4" /> The Future of Micro-Investing
           </div>
-          
           <h1 className="text-5xl lg:text-7xl font-black leading-tight mb-6">
             Turn every <br className="hidden lg:block"/> payment into a <br className="hidden lg:block"/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-payae-accent to-payae-green">
               micro-investment.
             </span>
           </h1>
-          
           <p className="text-lg lg:text-xl text-gray-400 mb-10 max-w-2xl mx-auto lg:mx-0">
             PayAE automatically rounds up your daily UPI transactions and smartly distributes the spare change into Digital Gold, Mutual Funds, and Liquid Savings.
           </p>
-          
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-            <button onClick={() => navigate('/login')} className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-payae-accent to-blue-600 text-black font-black text-lg hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95">
+            <button onClick={() => navigate('/register')} className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-payae-accent to-blue-600 text-black font-black text-lg hover:shadow-[0_0_30px_rgba(0,229,255,0.4)] transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95">
               Start Investing <ArrowRight className="w-5 h-5" />
             </button>
           </div>
+          
+          <div className="mt-12 flex flex-wrap justify-center lg:justify-start gap-6 text-sm font-semibold text-gray-400">
+            <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-payae-green"/> Bank-Level Security</span>
+            <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-payae-orange"/> Instant UPI Routing</span>
+            <span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-payae-accent"/> Smart Allocations</span>
+          </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="flex-1 relative w-full max-w-md lg:max-w-none h-[500px] hidden md:block perspective-1000">
-          <motion.div animate={floatAnimation} className="absolute top-10 left-10 lg:left-20 w-72 h-96 bg-gradient-to-b from-white/10 to-transparent border border-white/20 rounded-3xl backdrop-blur-2xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-20" style={{ transformStyle: "preserve-3d", transform: "rotateY(-15deg) rotateX(10deg)" }}>
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="flex-1 relative w-full max-w-md lg:max-w-none h-[500px] hidden md:block" style={{ perspective: "1000px" }}>
+          <motion.div animate={floatAnimation} className="absolute top-10 left-10 lg:left-20 w-72 h-96 bg-gradient-to-b from-white/10 to-black/40 border border-white/20 rounded-3xl backdrop-blur-2xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-20" style={{ transformStyle: "preserve-3d", transform: "rotateY(-15deg) rotateX(10deg)" }}>
             <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
               <span className="text-sm font-bold text-gray-300">UPI Payment</span>
               <span className="text-lg font-black text-white">₹145.00</span>
@@ -90,9 +92,9 @@ export default function Landing() {
                 <span className="text-sm text-gray-400">Round-Up</span>
                 <span className="text-payae-success font-bold">+₹5.00</span>
               </div>
-              <div className="h-24 bg-gradient-to-tr from-payae-accent/20 to-blue-500/20 rounded-xl border border-payae-accent/30 p-4">
-                <p className="text-xs text-payae-accent uppercase font-bold tracking-wider mb-2">Routing to Portfolio</p>
-                <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden flex">
+              <div className="h-24 bg-gradient-to-tr from-payae-accent/20 to-blue-500/20 rounded-xl border border-payae-accent/30 p-4 relative overflow-hidden">
+                <p className="text-xs text-payae-accent uppercase font-bold tracking-wider mb-2 relative z-10">Routing to Portfolio</p>
+                <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden flex relative z-10 mt-6">
                   <div className="h-full bg-blue-500 w-[40%]" />
                   <div className="h-full bg-payae-success w-[40%]" />
                   <div className="h-full bg-payae-orange w-[20%]" />
@@ -101,6 +103,32 @@ export default function Landing() {
             </div>
           </motion.div>
         </motion.div>
+      </div>
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-24">
+         <div className="bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl flex flex-col md:flex-row items-center gap-12">
+            <div className="flex-1 w-full">
+               <div className="flex items-center gap-3 mb-4">
+                 <div className="p-3 bg-payae-success/10 rounded-xl"><Calculator className="text-payae-success w-6 h-6" /></div>
+                 <h2 className="text-2xl font-bold">Wealth Predictor</h2>
+               </div>
+               <p className="text-gray-400 mb-8">Drag to see how your daily spending turns into passive wealth over 1 year.</p>
+               
+               <div className="mb-2 flex justify-between text-sm font-bold">
+                 <span className="text-gray-400">Monthly UPI Spend</span>
+                 <span className="text-payae-accent">₹{monthlySpend.toLocaleString()}</span>
+               </div>
+               <input type="range" min="1000" max="50000" step="1000" value={monthlySpend} onChange={(e) => setMonthlySpend(Number(e.target.value))} className="w-full accent-payae-success h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer" />
+            </div>
+
+            <div className="flex-1 w-full bg-gradient-to-br from-payae-card to-black p-8 rounded-2xl border border-white/5 text-center">
+               <p className="text-sm text-gray-400 font-semibold mb-2 uppercase tracking-widest">Projected 1-Year Wealth</p>
+               <h3 className="text-5xl font-black text-white mb-2 flex justify-center items-center gap-2">
+                 ₹{yearlyProjection.toLocaleString(undefined, { maximumFractionDigits: 0 })} <ArrowUpRight className="text-payae-success w-8 h-8" />
+               </h3>
+               <p className="text-xs text-gray-500 mt-4">*Based on algorithmic average routing and 10% expected returns.</p>
+            </div>
+         </div>
       </div>
 
       <div className="bg-black/40 py-24 border-t border-white/5 relative z-10">
