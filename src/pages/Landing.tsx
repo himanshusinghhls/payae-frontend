@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, Transition } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, ShieldCheck, Zap, TrendingUp, Sparkles, Building2, Calculator, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ShieldCheck, Zap, TrendingUp, Sparkles, Building2, Calculator, ArrowUpRight, Lock } from "lucide-react";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -10,12 +10,14 @@ export default function Landing() {
   const monthlyInvested = monthlySpend * 0.08;
   const yearlyProjection = (monthlyInvested * 12) * 1.10;
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
+  useEffect(() => { 
+    const timer = setTimeout(() => setLoading(false), 1500); 
+    return () => clearTimeout(timer); 
   }, []);
 
-  const floatAnimation = { y: [0, -20, 0], transition: { duration: 4, repeat: Infinity, ease: "easeInOut" as const } };
+  const floatMainTransition: Transition = { duration: 4, repeat: Infinity, ease: "easeInOut" };
+  const floatFastTransition: Transition = { duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 };
+  const floatSlowTransition: Transition = { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 };
 
   if (loading) {
     return (
@@ -32,11 +34,9 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#0A0F1C] text-white overflow-hidden relative selection:bg-payae-accent selection:text-black">
-      
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-payae-accent/20 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute top-[40%] right-[-10%] w-[30%] h-[50%] bg-payae-success/10 rounded-full blur-[150px] pointer-events-none" />
-
-      <nav className="relative z-20 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto backdrop-blur-md bg-black/10 rounded-b-3xl">
+      <nav className="relative z-20 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto backdrop-blur-md bg-black/10 rounded-b-3xl border-b border-white/5">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-1">
             Pay<span className="text-payae-orange">A</span>
@@ -56,7 +56,7 @@ export default function Landing() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-20 flex flex-col lg:flex-row items-center gap-16">
         <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="flex-1 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-payae-accent/10 border border-payae-accent/20 text-payae-accent text-sm font-bold mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-payae-accent/10 border border-payae-accent/20 text-payae-accent text-sm font-bold mb-6 shadow-[0_0_20px_rgba(0,229,255,0.2)]">
             <Sparkles className="w-4 h-4" /> The Future of Micro-Investing
           </div>
           <h1 className="text-5xl lg:text-7xl font-black leading-tight mb-6">
@@ -73,28 +73,26 @@ export default function Landing() {
               Start Investing <ArrowRight className="w-5 h-5" />
             </button>
           </div>
-          
           <div className="mt-12 flex flex-wrap justify-center lg:justify-start gap-6 text-sm font-semibold text-gray-400">
             <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-payae-green"/> Bank-Level Security</span>
             <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-payae-orange"/> Instant UPI Routing</span>
-            <span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-payae-accent"/> Smart Allocations</span>
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="flex-1 relative w-full max-w-md lg:max-w-none h-[500px] hidden md:block" style={{ perspective: "1000px" }}>
-          <motion.div animate={floatAnimation} className="absolute top-10 left-10 lg:left-20 w-72 h-96 bg-gradient-to-b from-white/10 to-black/40 border border-white/20 rounded-3xl backdrop-blur-2xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-20" style={{ transformStyle: "preserve-3d", transform: "rotateY(-15deg) rotateX(10deg)" }}>
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="flex-1 relative w-full max-w-md lg:max-w-none h-[500px] hidden md:block" style={{ perspective: "1200px" }}>
+          <motion.div animate={{ y: [0, -20, 0] }} transition={floatMainTransition} className="absolute top-10 left-20 w-72 h-96 bg-gradient-to-b from-white/10 to-black/60 border border-white/20 rounded-[40px] backdrop-blur-3xl p-6 shadow-[0_30px_60px_rgba(0,0,0,0.6)] z-20" style={{ transformStyle: "preserve-3d", transform: "rotateY(-15deg) rotateX(10deg)" }}>
             <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
               <span className="text-sm font-bold text-gray-300">UPI Payment</span>
-              <span className="text-lg font-black text-white">₹145.00</span>
+              <span className="text-xl font-black text-white">₹145.00</span>
             </div>
-            <div className="space-y-4">
-              <div className="h-12 bg-white/5 rounded-xl border border-white/10 flex items-center px-4 justify-between">
-                <span className="text-sm text-gray-400">Round-Up</span>
-                <span className="text-payae-success font-bold">+₹5.00</span>
+            <div className="space-y-5">
+              <div className="h-14 bg-white/5 rounded-2xl border border-white/10 flex items-center px-4 justify-between shadow-inner">
+                <span className="text-sm text-gray-400">Auto-Invest</span>
+                <span className="text-payae-success font-bold text-lg">+₹5.00</span>
               </div>
-              <div className="h-24 bg-gradient-to-tr from-payae-accent/20 to-blue-500/20 rounded-xl border border-payae-accent/30 p-4 relative overflow-hidden">
-                <p className="text-xs text-payae-accent uppercase font-bold tracking-wider mb-2 relative z-10">Routing to Portfolio</p>
-                <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden flex relative z-10 mt-6">
+              <div className="h-32 bg-gradient-to-tr from-payae-accent/10 to-blue-500/10 rounded-2xl border border-payae-accent/30 p-5 relative overflow-hidden">
+                <p className="text-xs text-payae-accent uppercase font-bold tracking-wider mb-4 relative z-10">Portfolio Routing</p>
+                <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden flex relative z-10 shadow-inner">
                   <div className="h-full bg-blue-500 w-[40%]" />
                   <div className="h-full bg-payae-success w-[40%]" />
                   <div className="h-full bg-payae-orange w-[20%]" />
@@ -102,6 +100,24 @@ export default function Landing() {
               </div>
             </div>
           </motion.div>
+
+          <motion.div animate={{ y: [0, -15, 0] }} transition={floatFastTransition} className="absolute top-0 left-0 bg-black/80 border border-payae-green/30 backdrop-blur-xl p-5 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
+             <div className="bg-payae-green/20 p-3 rounded-2xl"><Lock className="text-payae-green w-6 h-6" /></div>
+             <div>
+                <p className="text-xs text-gray-400 font-bold uppercase">Secured</p>
+                <p className="text-sm font-bold text-white">256-bit Encryption</p>
+             </div>
+          </motion.div>
+
+          <motion.div animate={{ y: [0, 25, 0] }} transition={floatSlowTransition} className="absolute bottom-10 right-10 bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-5 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
+             <div className="bg-payae-accent/20 p-3 rounded-2xl"><TrendingUp className="text-payae-accent w-6 h-6" /></div>
+             <div>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Growth</p>
+                <p className="text-xl font-black text-white">+12.4%</p>
+             </div>
+          </motion.div>
+          <motion.div animate={{ scale: [1, 1.5], opacity: [0.5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }} className="absolute top-10 left-20 w-80 h-80 border border-payae-accent/20 rounded-full z-10" />
+          <motion.div animate={{ scale: [1, 1.8], opacity: [0.3, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeOut" }} className="absolute top-10 left-20 w-80 h-80 border border-payae-success/20 rounded-full z-10" />
         </motion.div>
       </div>
 
@@ -121,12 +137,12 @@ export default function Landing() {
                <input type="range" min="1000" max="50000" step="1000" value={monthlySpend} onChange={(e) => setMonthlySpend(Number(e.target.value))} className="w-full accent-payae-success h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer" />
             </div>
 
-            <div className="flex-1 w-full bg-gradient-to-br from-payae-card to-black p-8 rounded-2xl border border-white/5 text-center">
+            <div className="flex-1 w-full bg-gradient-to-br from-payae-card to-black p-8 rounded-3xl border border-white/5 text-center shadow-inner">
                <p className="text-sm text-gray-400 font-semibold mb-2 uppercase tracking-widest">Projected 1-Year Wealth</p>
                <h3 className="text-5xl font-black text-white mb-2 flex justify-center items-center gap-2">
                  ₹{yearlyProjection.toLocaleString(undefined, { maximumFractionDigits: 0 })} <ArrowUpRight className="text-payae-success w-8 h-8" />
                </h3>
-               <p className="text-xs text-gray-500 mt-4">*Based on algorithmic average routing and 10% expected returns.</p>
+               <p className="text-xs text-gray-500 mt-4">*Based on an 8% average algorithmic routing and 10% expected returns.</p>
             </div>
          </div>
       </div>
@@ -141,9 +157,10 @@ export default function Landing() {
         </div>
       </div>
 
-      <footer className="bg-[#050810] py-8 border-t border-white/10 text-center relative z-10">
-         <div className="flex flex-col md:flex-row justify-center items-center gap-6 text-sm text-gray-500 font-medium">
+      <footer className="bg-[#050810] py-12 border-t border-white/10 text-center relative z-10">
+         <div className="flex flex-col md:flex-row justify-center items-center gap-8 text-sm text-gray-500 font-medium">
             <span>&copy; {new Date().getFullYear()} PayAE Inc.</span>
+            <span className="hidden md:block text-gray-800">|</span>
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms & Conditions</a>
             <a href="#" className="hover:text-white transition-colors">Contact Support</a>
