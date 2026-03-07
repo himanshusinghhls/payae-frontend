@@ -32,8 +32,10 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#0A0F1C] text-white overflow-hidden relative selection:bg-payae-accent selection:text-black">
+      
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-payae-accent/20 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute top-[40%] right-[-10%] w-[30%] h-[50%] bg-payae-success/10 rounded-full blur-[150px] pointer-events-none" />
+
       <nav className="relative z-20 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto backdrop-blur-md bg-black/10 rounded-b-3xl border-b border-white/5">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-extrabold tracking-tight flex items-center gap-1">
@@ -53,6 +55,7 @@ export default function Landing() {
       </nav>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-20 flex flex-col lg:flex-row items-center gap-16">
+        
         <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="flex-1 text-center lg:text-left">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-payae-accent/10 border border-payae-accent/20 text-payae-accent text-sm font-bold mb-6 shadow-[0_0_20px_rgba(0,229,255,0.2)]">
             <Sparkles className="w-4 h-4" /> The Future of Micro-Investing
@@ -77,30 +80,45 @@ export default function Landing() {
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="flex-1 relative w-full max-w-md lg:max-w-none h-[600px] hidden md:block" style={{ perspective: "1200px" }}>
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} className="flex-1 relative w-full h-[600px] hidden lg:flex items-center justify-center" style={{ perspective: "1200px" }}>
           
-          <motion.div animate={{ y: ["-50%", "calc(-50% - 20px)", "-50%"] }} transition={floatMainTransition} className="absolute top-1/2 left-1/2 w-80 h-[420px] bg-gradient-to-b from-white/10 to-black/60 border border-white/20 rounded-[40px] backdrop-blur-3xl p-8 shadow-[0_30px_80px_rgba(0,229,255,0.2)] z-20" style={{ transformStyle: "preserve-3d", transform: "translate(-50%, -50%) rotateY(-15deg) rotateX(10deg)" }}>
-            <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-              <span className="text-sm font-bold text-gray-300">UPI Payment</span>
-              <span className="text-xl font-black text-white">₹250.00</span>
-            </div>
-            <div className="space-y-5">
-              <div className="h-14 bg-white/5 rounded-2xl border border-white/10 flex items-center px-4 justify-between shadow-inner">
-                <span className="text-sm text-gray-400">Auto-Invest</span>
-                <span className="text-payae-success font-bold text-lg">+₹5.00</span>
+          <motion.div animate={{ scale: [1, 1.5], opacity: [0.5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }} className="absolute w-80 h-80 border border-payae-accent/20 rounded-full z-0 pointer-events-none" />
+          <motion.div animate={{ scale: [1, 1.8], opacity: [0.3, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeOut" }} className="absolute w-80 h-80 border border-payae-success/20 rounded-full z-0 pointer-events-none" />
+
+          <div className="absolute z-20" style={{ transformStyle: "preserve-3d", transform: "rotateY(-15deg) rotateX(10deg)" }}>
+            <motion.div 
+              animate={{ y: [0, -20, 0] }} 
+              transition={floatMainTransition}
+              whileHover={{ scale: 1.03, boxShadow: "0 0 50px rgba(0,229,255,0.4)", rotateY: 0, rotateX: 0 }}
+              className="w-80 h-[420px] bg-gradient-to-b from-white/10 to-black/60 border border-white/20 rounded-[40px] backdrop-blur-3xl p-8 shadow-[0_30px_80px_rgba(0,0,0,0.6)] cursor-pointer transition-all duration-300" 
+            >
+              <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+                <span className="text-sm font-bold text-gray-300">UPI Payment</span>
+                <span className="text-xl font-black text-white">₹250.00</span>
               </div>
-              <div className="h-32 bg-gradient-to-tr from-payae-accent/10 to-blue-500/10 rounded-2xl border border-payae-accent/30 p-5 relative overflow-hidden">
-                <p className="text-xs text-payae-accent uppercase font-bold tracking-wider mb-4 relative z-10">Portfolio Routing</p>
-                <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden flex relative z-10 shadow-inner">
-                  <div className="h-full bg-blue-500 w-[40%]" />
-                  <div className="h-full bg-payae-success w-[40%]" />
-                  <div className="h-full bg-payae-orange w-[20%]" />
+              <div className="space-y-5">
+                <div className="h-14 bg-white/5 rounded-2xl border border-white/10 flex items-center px-4 justify-between shadow-inner">
+                  <span className="text-sm text-gray-400">Auto-Invest</span>
+                  <span className="text-payae-success font-bold text-lg">+₹5.00</span>
+                </div>
+                <div className="h-32 bg-gradient-to-tr from-payae-accent/10 to-blue-500/10 rounded-2xl border border-payae-accent/30 p-5 relative overflow-hidden">
+                  <p className="text-xs text-payae-accent uppercase font-bold tracking-wider mb-4 relative z-10">Portfolio Routing</p>
+                  <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden flex relative z-10 shadow-inner">
+                    <div className="h-full bg-blue-500 w-[40%]" />
+                    <div className="h-full bg-payae-success w-[40%]" />
+                    <div className="h-full bg-payae-orange w-[20%]" />
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
 
-          <motion.div animate={{ y: [0, -15, 0] }} transition={floatFastTransition} className="absolute top-[15%] left-[5%] bg-black/80 border border-payae-green/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
+          <motion.div 
+            animate={{ y: [0, -15, 0] }} 
+            transition={floatFastTransition} 
+            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(0,255,148,0.4)" }}
+            className="absolute top-[15%] left-[5%] xl:left-[10%] bg-black/80 border border-payae-green/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl z-30 flex items-center gap-4 cursor-pointer"
+          >
              <div className="bg-payae-green/20 p-3 rounded-2xl"><Lock className="text-payae-green w-5 h-5" /></div>
              <div>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Secured</p>
@@ -108,16 +126,18 @@ export default function Landing() {
              </div>
           </motion.div>
 
-          <motion.div animate={{ y: [0, 25, 0] }} transition={floatSlowTransition} className="absolute bottom-[15%] right-[5%] bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl z-30 flex items-center gap-4">
+          <motion.div 
+            animate={{ y: [0, 25, 0] }} 
+            transition={floatSlowTransition} 
+            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(245,130,32,0.4)" }}
+            className="absolute bottom-[15%] right-[5%] xl:right-[10%] bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl z-30 flex items-center gap-4 cursor-pointer"
+          >
              <div className="bg-payae-accent/20 p-3 rounded-2xl"><TrendingUp className="text-payae-accent w-5 h-5" /></div>
              <div>
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Growth</p>
                 <p className="text-xl font-black text-white">+12.4%</p>
              </div>
           </motion.div>
-
-          <motion.div animate={{ scale: [1, 1.5], opacity: [0.5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 border border-payae-accent/20 rounded-full z-0 pointer-events-none" />
-          <motion.div animate={{ scale: [1, 1.8], opacity: [0.3, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeOut" }} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 border border-payae-success/20 rounded-full z-0 pointer-events-none" />
 
         </motion.div>
       </div>
