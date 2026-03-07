@@ -3,7 +3,7 @@ import AppLayout from "../components/layout/AppLayout";
 import api from "../api/client";
 import { motion } from "framer-motion";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Settings as SettingsIcon, Save, PieChart, CheckCircle2, Loader2, Plus, Minus } from "lucide-react";
+import { Settings as SettingsIcon, Save, PieChart, CheckCircle2, Loader2, Plus, Minus, Power } from "lucide-react";
 
 type AllocationSettings = {
   savingsPercent: number;
@@ -25,6 +25,8 @@ export default function Settings() {
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
+  
+  const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(() => localStorage.getItem('autoSaveEnabled') !== 'false');
 
   const { data: initialSettings, isLoading: isFetching } = useQuery({
     queryKey: ['allocationSettings'],
@@ -40,6 +42,13 @@ export default function Settings() {
       });
     }
   }, [initialSettings]);
+
+  const toggleMasterSwitch = () => {
+    const newValue = !isAutoSaveEnabled;
+    setIsAutoSaveEnabled(newValue);
+    localStorage.setItem('autoSaveEnabled', String(newValue));
+    window.dispatchEvent(new Event('autoSaveToggled'));
+  };
 
   const adjustValue = (key: keyof AllocationSettings, amount: number) => {
     setSettings(prev => {
@@ -93,10 +102,31 @@ export default function Settings() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Left Column: Interactive Buttons */}
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-payae-card backdrop-blur-xl border border-payae-border p-6 md:p-8 rounded-3xl shadow-2xl">
-              <div className="space-y-6">
-                
-                {/* Savings Control */}
+              
+              {/* MASTER SWITCH UI */}
+              <div className="bg-black/40 p-5 rounded-2xl border border-payae-border flex justify-between items-center mb-8">
                 <div>
+                  <h3 className="text-white font-bold flex items-center gap-2">
+                    <Power className={`w-4 h-4 ${isAutoSaveEnabled ? 'text-payae-success' : 'text-gray-500'}`} />
+                    Master Auto-Save
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">Pause all background round-ups.</p>
+                </div>
+                <button 
+                  onClick={toggleMasterSwitch} 
+                  className={`w-14 h-7 rounded-full transition-colors relative flex items-center px-1 ${isAutoSaveEnabled ? 'bg-payae-success' : 'bg-gray-600'}`}
+                >
+                  <motion.div 
+                    layout 
+                    className="w-5 h-5 bg-white rounded-full shadow-md"
+                    animate={{ x: isAutoSaveEnabled ? 28 : 0 }}
+                  />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Savings Control */}
+                <div className={!isAutoSaveEnabled ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
                   <label className="text-blue-400 font-semibold flex items-center gap-2 mb-3">
                     <div className="w-3 h-3 rounded-full bg-blue-500" /> Liquid Savings
                   </label>
@@ -108,7 +138,7 @@ export default function Settings() {
                 </div>
 
                 {/* Mutual Fund Control */}
-                <div>
+                <div className={!isAutoSaveEnabled ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
                   <label className="text-payae-success font-semibold flex items-center gap-2 mb-3">
                     <div className="w-3 h-3 rounded-full bg-payae-success" /> Mutual Funds
                   </label>
@@ -120,7 +150,7 @@ export default function Settings() {
                 </div>
 
                 {/* Gold Control */}
-                <div>
+                <div className={!isAutoSaveEnabled ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
                   <label className="text-payae-orange font-semibold flex items-center gap-2 mb-3">
                     <div className="w-3 h-3 rounded-full bg-payae-orange" /> Digital Gold
                   </label>
@@ -132,7 +162,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={saveMutation.isPending} className="w-full mt-8 bg-white text-black font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 hover:bg-gray-200 transition-colors disabled:opacity-70">
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSave} disabled={saveMutation.isPending || !isAutoSaveEnabled} className="w-full mt-8 bg-white text-black font-bold py-4 rounded-xl shadow-lg flex justify-center items-center gap-2 hover:bg-gray-200 transition-colors disabled:opacity-50">
                 {saveMutation.isPending ? <Loader2 className="animate-spin" /> : <Save size={20} />}
                 Save Allocation Rules
               </motion.button>

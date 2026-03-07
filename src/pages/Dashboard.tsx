@@ -1,11 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
 import { motion } from "framer-motion";
 import AppLayout from "../components/layout/AppLayout";
 import StatCard from "../components/ui/StatCard";
 import PortfolioChart from "../components/charts/PortfolioChart";
-import AllocationPreview from "../components/ui/AllocationPreview";
 import ChartCard from "../components/charts/AllocationChart"; 
+import AnimatedNumber from "../components/ui/AnimatedNumber";
+import { Plus, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 type DashboardData = {
   bankBalance: number;
@@ -34,10 +36,23 @@ const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transiti
 const itemVariants = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0 } };
 
 export default function Dashboard() {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboard,
     refetchInterval: 10000
+  });
+
+  const topUpMutation = useMutation({
+    mutationFn: async () => {
+      await api.post("/api/users/topup", { amount: 10000 });
+    },
+    onSuccess: () => {
+      toast.success("₹10,000 added to your virtual wallet!");
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard_balance'] });
+    },
+    onError: () => toast.error("Failed to top up wallet.")
   });
 
   if (isLoading) {
@@ -56,11 +71,28 @@ export default function Dashboard() {
     <AppLayout>
       <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-7xl mx-auto space-y-8">
         
-        {/* Top Stats Row - Now 4 Columns to fit the Bank Balance! */}
+        {/* Top Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {/* Virtual Bank Account Card */}
-          <motion.div variants={itemVariants} whileHover={{ y: -5 }} className="transition-all shadow-[0_0_30px_rgba(245,130,32,0.1)] rounded-3xl">
-            <StatCard title="Virtual Bank Balance" value={data.bankBalance} prefix="₹" />
+          
+          {/* UPGRADED Virtual Bank Account Card with Top-Up Button */}
+          <motion.div variants={itemVariants} whileHover={{ y: -5 }} className="bg-gradient-to-br from-payae-card to-black border border-payae-orange/30 p-6 rounded-3xl shadow-[0_0_30px_rgba(245,130,32,0.1)] relative overflow-hidden group">
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-payae-orange/10 rounded-full blur-2xl group-hover:bg-payae-orange/20 transition-all" />
+            <div className="flex justify-between items-start relative z-10">
+              <div>
+                <p className="text-sm text-gray-400 font-semibold mb-1">Virtual Bank Balance</p>
+                <h3 className="text-3xl font-black text-white">
+                  <AnimatedNumber value={data.bankBalance} />
+                </h3>
+              </div>
+              <button 
+                onClick={() => topUpMutation.mutate()} 
+                disabled={topUpMutation.isPending}
+                className="w-10 h-10 bg-payae-orange/20 text-payae-orange rounded-xl flex items-center justify-center hover:bg-payae-orange hover:text-black transition-colors"
+                title="Top up ₹10,000"
+              >
+                {topUpMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+              </button>
+            </div>
           </motion.div>
 
           <motion.div variants={itemVariants} whileHover={{ y: -5 }} className="transition-all">
@@ -78,7 +110,6 @@ export default function Dashboard() {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* FIX: Added strict height h-[400px] and flex-col to contain the chart! */}
           <motion.div variants={itemVariants} className="lg:col-span-2 bg-payae-card backdrop-blur-xl border border-payae-border p-6 rounded-3xl shadow-2xl relative overflow-hidden h-[400px] flex flex-col">
             <div className="absolute top-0 right-0 w-64 h-64 bg-payae-accent/5 rounded-full blur-[80px] pointer-events-none" />
             <PortfolioChart />

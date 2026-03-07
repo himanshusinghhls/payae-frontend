@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import api from "../api/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CheckCircle, ArrowRight, ShieldCheck, Settings2, Users, AlertCircle, XCircle } from "lucide-react";
+import { Loader2, CheckCircle, ShieldCheck, Settings2, Users, AlertCircle, XCircle } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import AnimatedNumber from "../components/ui/AnimatedNumber";
 
 const loadRazorpayScript = () => new Promise((resolve) => {
   const script = document.createElement("script");
@@ -19,7 +21,7 @@ const CONTACTS = [
   { id: 1, name: "Amazon India", upi: "amazon@apl" },
   { id: 2, name: "Zomato", upi: "zomato@paytm" },
   { id: 3, name: "Starbucks", upi: "starbucks@sbi" },
-  { id: 4, name: "Rahul (Friend)", upi: "rahul99@okicici" },
+  { id: 4, name: "xyz (Friend)", upi: "xyz@oksbi" },
   { id: 5, name: "College Canteen", upi: "canteen@ybl" }
 ];
 
@@ -27,7 +29,9 @@ export default function Payment() {
   const queryClient = useQueryClient(); 
   const [baseAmount, setBaseAmount] = useState<number | "">("");
   const [roundup, setRoundup] = useState<number>(0);
-  const [isRoundUpEnabled, setIsRoundUpEnabled] = useState(true);
+  
+  const [isRoundUpEnabled, setIsRoundUpEnabled] = useState(() => localStorage.getItem('autoSaveEnabled') !== 'false');
+  
   const [activeRule, setActiveRule] = useState<RoundUpRule>('SMART_ALGO');
   const [customPercent, setCustomPercent] = useState<number>(15);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "success" | "failed">("idle");
@@ -138,7 +142,8 @@ export default function Payment() {
 
       setTimeout(() => setPaymentStatus("idle"), 5000);
     },
-    onError: () => {
+    onError: (e: any) => {
+      toast.error(e.message || "Payment verification failed.");
       setPaymentStatus("failed");
       setTimeout(() => setPaymentStatus("idle"), 5000);
     },
@@ -174,8 +179,9 @@ export default function Payment() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-400">Bank Balance</p>
-                  {/* The balance will instantly snap to the new value upon success! */}
-                  <p className={`font-bold ${currentBalance < 500 ? 'text-red-400' : 'text-payae-success'}`}>₹{currentBalance.toFixed(2)}</p>
+                  <p className={`font-bold text-xl ${currentBalance < 500 ? 'text-red-400' : 'text-payae-success'}`}>
+                    <AnimatedNumber value={currentBalance} />
+                  </p>
                 </div>
               </div>
 
@@ -224,6 +230,20 @@ export default function Payment() {
                             </button>
                           ))}
                          </div>
+
+                         {/* THE RESTORED CUSTOM PERCENTAGE SLIDER */}
+                         <AnimatePresence>
+                           {activeRule === 'CUSTOM' && (
+                             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                               <div className="flex justify-between text-xs text-gray-400 mb-2 mt-4">
+                                 <span>Custom Percentage</span>
+                                 <span className="text-payae-accent font-bold">{customPercent}%</span>
+                               </div>
+                               <input type="range" min="1" max="50" value={customPercent} onChange={(e) => setCustomPercent(Number(e.target.value))} className="w-full accent-payae-accent" />
+                             </motion.div>
+                           )}
+                         </AnimatePresence>
+
                          <div className="flex justify-between items-end pt-4 border-t border-payae-border/50">
                              <span className="text-sm text-gray-300">To be invested</span>
                              <span className="text-2xl font-black text-payae-success">+₹{roundup.toFixed(2)}</span>

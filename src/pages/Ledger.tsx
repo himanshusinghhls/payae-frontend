@@ -18,7 +18,32 @@ export default function Ledger() {
   const [expandedWalletId, setExpandedWalletId] = useState<number | null>(null);
 
   const transactions = rawTransactions || [];
-  const basePayments = transactions.filter((t: any) => t.type.includes("PAYMENT")).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  
+  const basePayments = transactions
+    .filter((t: any) => t.type?.includes("PAYMENT"))
+    .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  let availableRoundups = transactions.filter((t: any) => !t.type?.includes("PAYMENT"));
+
+  const smartLedger = basePayments.map((payment: any) => {
+    const pTime = new Date(payment.timestamp).getTime();
+    
+    const linkedRoundups = availableRoundups.filter((r: any) => {
+      const rTime = new Date(r.timestamp).getTime();
+      return rTime >= pTime && rTime <= pTime + 10000;
+    });
+
+    availableRoundups = availableRoundups.filter((r: any) => !linkedRoundups.includes(r));
+    
+    const totalRoundupAmount = linkedRoundups.reduce((sum: number, r: any) => sum + r.amount, 0);
+
+    return { 
+      ...payment, 
+      linkedRoundups, 
+      totalRoundupAmount, 
+      totalCharge: payment.amount + totalRoundupAmount 
+    };
+  });
 
   return (
     <AppLayout>
@@ -38,18 +63,14 @@ export default function Ledger() {
           <div className="space-y-3 animate-pulse">
             {[1, 2, 3].map((i) => <div key={i} className="h-20 bg-payae-card rounded-xl border border-payae-border" />)}
           </div>
-        ) : isError || basePayments.length === 0 ? (
+        ) : isError || smartLedger.length === 0 ? (
           <div className="text-center p-16 bg-payae-card border border-payae-border rounded-2xl">
             <Receipt className="mx-auto text-gray-600 w-12 h-12 mb-4" />
-            <h3 className="text-xl font-medium text-white mb-2">No grouped transactions yet</h3>
+            <h3 className="text-xl font-medium text-white mb-2">No transactions yet</h3>
           </div>
         ) : (
           <div className="space-y-4">
-            {basePayments.map((payment: any) => {
-              const linkedRoundups = transactions.filter((t: any) => !t.type.includes("PAYMENT") && new Date(t.timestamp).getTime() - new Date(payment.timestamp).getTime() < 5000);
-              const totalRoundupAmount = linkedRoundups.reduce((sum: number, r: any) => sum + r.amount, 0);
-              const totalCharge = payment.amount + totalRoundupAmount;
-              
+            {smartLedger.map((payment: any) => {
               const isBaseExpanded = expandedBaseId === payment.id;
               const isWalletExpanded = expandedWalletId === payment.id;
 
@@ -66,38 +87,36 @@ export default function Ledger() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <div className="text-xl font-black text-white">-₹{totalCharge.toFixed(2)}</div>
+                      <div className="text-xl font-black text-white">-₹{payment.totalCharge.toFixed(2)}</div>
                       <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${isBaseExpanded ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
 
-                  {/* TIER 2: Payment vs Wallet Split */}
+                  {/* TIER 2: Split */}
                   <AnimatePresence>
                     {isBaseExpanded && (
                       <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="bg-black/40 border-t border-payae-border overflow-hidden">
-                        
                         <div className="p-4 pl-16 flex justify-between items-center border-b border-white/5">
                           <span className="text-gray-300 font-medium text-sm">Sent to Receiver</span>
                           <span className="text-gray-300 font-bold">-₹{payment.amount.toFixed(2)}</span>
                         </div>
 
-                        {/* Sent to Wallet (Clickable!) */}
                         <div className="p-4 pl-16 flex justify-between items-center cursor-pointer hover:bg-white/5 transition-colors group" onClick={() => setExpandedWalletId(isWalletExpanded ? null : payment.id)}>
                           <div className="flex items-center gap-2">
                             <Wallet className="w-4 h-4 text-payae-accent" />
                             <span className="text-payae-accent font-bold text-sm">Routed to PayAE Wallet</span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-payae-success font-black">+₹{totalRoundupAmount.toFixed(2)}</span>
+                            <span className="text-payae-success font-black">+₹{payment.totalRoundupAmount.toFixed(2)}</span>
                             <ChevronDown className={`w-4 h-4 text-payae-accent transition-transform ${isWalletExpanded ? 'rotate-180' : ''}`} />
                           </div>
                         </div>
 
-                        {/* TIER 3: Asset Distribution */}
+                        {/* TIER 3: Assets */}
                         <AnimatePresence>
                           {isWalletExpanded && (
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-black/60 p-4 pl-24 flex flex-col gap-2">
-                              {linkedRoundups.length > 0 ? linkedRoundups.map((r: any) => (
+                              {payment.linkedRoundups.length > 0 ? payment.linkedRoundups.map((r: any) => (
                                 <div key={r.id} className="flex justify-between items-center text-xs">
                                   <span className="text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                     <PieChart className="w-3 h-3"/> {r.assetType || 'Liquid Savings'}
