@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
 import AppLayout from "../components/layout/AppLayout";
@@ -6,30 +6,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Wallet, TrendingUp, Coins, Loader2, PieChart, ArrowDownToLine, X } from "lucide-react";
 import toast from "react-hot-toast";
 
-type PortfolioData = { savingsBalance: number; mutualFundUnits: number; goldGrams: number; };
-
-const fetchPortfolio = async (): Promise<PortfolioData> => {
-  const response = await api.get("/api/dashboard");
-  const data = response.data?.data || response.data;
-  return { 
-    savingsBalance: Number(data.savingsBalance || data.savings || 0), 
-    mutualFundUnits: Number(data.mutualFundUnits || data.mf || 0), 
-    goldGrams: Number(data.goldGrams || data.gold || 0)
-  };
-};
-
 export default function Portfolio() {
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useQuery({ queryKey: ['portfolio'], queryFn: fetchPortfolio });
+  const { data: rawTransactions, isLoading, isError } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
   
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState(100);
 
-  const safeSavings = data?.savingsBalance || 0;
-  const safeMf = data?.mutualFundUnits || 0;
-  const safeGoldGrams = data?.goldGrams || 0;
-  const goldValueInRupees = safeGoldGrams * 7500;
-  const totalWealth = safeSavings + safeMf + goldValueInRupees;
+  const { calcSavings, calcMf, calcGold } = useMemo(() => {
+    let s = 0, m = 0, g = 0;
+    (rawTransactions || []).forEach((tx: any) => {
+      if (tx.type === "INVESTMENT" || tx.type === "ROUND_UP") {
+        const asset = (tx.assetType || "SAVINGS").toUpperCase();
+        if (asset.includes("MF") || asset.includes("MUTUAL")) m += tx.amount;
+        else if (asset.includes("GOLD")) g += tx.amount;
+        else s += tx.amount;
+      }
+    });
+    return { calcSavings: s, calcMf: m, calcGold: g };
+  }, [rawTransactions]);
+
+  const totalWealth = calcSavings + calcMf + calcGold;
+  const safeGoldGrams = calcGold > 0 ? calcGold / 7500 : 0;
 
   const withdrawMutation = useMutation({
     mutationFn: async () => {
@@ -39,20 +37,19 @@ export default function Portfolio() {
       toast.success(`Successfully liquidated ₹${withdrawAmount}`);
       setShowWithdraw(false);
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['portfolio'] });
+      queryClient.invalidateQueries({ queryKey: ['ledger'] });
     }
   });
 
   if (isLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
-  if (isError || !data) return <AppLayout><p className="text-red-400 text-center mt-10">Failed to load Portfolio data.</p></AppLayout>;
+  if (isError) return <AppLayout><p className="text-red-400 text-center mt-10">Failed to load Portfolio data.</p></AppLayout>;
 
-  const savPct = totalWealth > 0 ? (safeSavings / totalWealth) * 100 : 0;
-  const mfPct = totalWealth > 0 ? (safeMf / totalWealth) * 100 : 0;
-  const goldPct = totalWealth > 0 ? (goldValueInRupees / totalWealth) * 100 : 0;
+  const savPct = totalWealth > 0 ? (calcSavings / totalWealth) * 100 : 0;
+  const mfPct = totalWealth > 0 ? (calcMf / totalWealth) * 100 : 0;
+  const goldPct = totalWealth > 0 ? (calcGold / totalWealth) * 100 : 0;
 
   return (
     <AppLayout>
-      
       <AnimatePresence>
         {showWithdraw && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -107,18 +104,18 @@ export default function Portfolio() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-gradient-to-br from-[#00E5FF]/10 to-black/40 border border-[#00E5FF]/30 p-5 rounded-2xl flex flex-col justify-between shadow-lg">
             <div className="flex items-center justify-between mb-6"><div className="bg-[#00E5FF]/20 p-2.5 rounded-lg"><Wallet className="text-[#00E5FF] w-5 h-5" /></div><span className="text-[#00E5FF] font-bold text-[10px] uppercase tracking-widest">Invested</span></div>
-            <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Liquid Savings</h3><p className="text-3xl font-black text-white">₹{safeSavings.toFixed(2)}</p></div>
+            <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Liquid Savings</h3><p className="text-3xl font-black text-white">₹{calcSavings.toFixed(2)}</p></div>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-gradient-to-br from-[#00FF94]/10 to-black/40 border border-[#00FF94]/30 p-5 rounded-2xl flex flex-col justify-between shadow-lg">
             <div className="flex items-center justify-between mb-6"><div className="bg-[#00FF94]/20 p-2.5 rounded-lg"><TrendingUp className="text-[#00FF94] w-5 h-5" /></div><span className="text-[#00FF94] font-bold text-[10px] uppercase tracking-widest">Invested</span></div>
-            <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Mutual Funds</h3><p className="text-3xl font-black text-white">₹{safeMf.toFixed(2)}</p></div>
+            <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Mutual Funds</h3><p className="text-3xl font-black text-white">₹{calcMf.toFixed(2)}</p></div>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-gradient-to-br from-[#f58220]/10 to-black/40 border border-[#f58220]/30 p-5 rounded-2xl flex flex-col justify-between shadow-lg">
             <div className="flex items-center justify-between mb-6"><div className="bg-[#f58220]/20 p-2.5 rounded-lg"><Coins className="text-[#f58220] w-5 h-5" /></div><span className="text-[#f58220] font-bold text-[10px] uppercase tracking-widest">Invested</span></div>
             <div className="flex justify-between items-end">
-              <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Digital Gold</h3><p className="text-3xl font-black text-white">₹{goldValueInRupees.toFixed(2)}</p></div>
+              <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Digital Gold</h3><p className="text-3xl font-black text-white">₹{calcGold.toFixed(2)}</p></div>
               <div className="text-right"><span className="text-gray-500 text-[10px] block mb-0.5 uppercase tracking-wider">Holdings</span><span className="text-white font-bold text-sm">{safeGoldGrams.toFixed(4)}g</span></div>
             </div>
           </motion.div>

@@ -5,31 +5,22 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import AppLayout from "../components/layout/AppLayout";
 import StatCard from "../components/ui/StatCard";
 import AnimatedNumber from "../components/ui/AnimatedNumber";
-import { Plus, Loader2, X, Target, Sparkles, Activity } from "lucide-react";
+import { Plus, Loader2, X, Target, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Confetti from "react-confetti";
 import OnboardingTour from "../components/ui/OnboardingTour";
 
-type DashboardData = { bankBalance: number; totalPayments: number; totalSavings: number; mfUnits: number; goldGrams: number; };
-
-const fetchDashboard = async (): Promise<DashboardData> => {
+const fetchDashboard = async () => {
   const res = await api.get("/api/dashboard"); 
-  const data = res.data.data || res.data; 
-  return { 
-    bankBalance: Number(data.bankBalance || 0), 
-    totalPayments: Number(data.totalInvested || 0), 
-    totalSavings: Number(data.savingsBalance || data.savings || 0), 
-    mfUnits: Number(data.mutualFundUnits || data.mf || 0), 
-    goldGrams: Number(data.goldGrams || data.gold || 0)
-  };
+  return res.data.data || res.data; 
 };
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data, isLoading, isError } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard, refetchInterval: 10000 });
-  const { data: rawTransactions } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
+  const { data: dashData, isLoading: isDashLoading } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard, refetchInterval: 10000 });
+  const { data: rawTransactions, isLoading: isLedgerLoading } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
   
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number>(1000);
@@ -50,8 +41,22 @@ export default function Dashboard() {
       toast.success(`₹${topUpAmount} added to your virtual wallet!`);
       setShowTopUpModal(false);
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['ledger'] });
     }
   });
+
+  const { calcSavings, calcMf, calcGold } = useMemo(() => {
+    let s = 0, m = 0, g = 0;
+    (rawTransactions || []).forEach((tx: any) => {
+      if (tx.type === "INVESTMENT" || tx.type === "ROUND_UP") {
+        const asset = (tx.assetType || "SAVINGS").toUpperCase();
+        if (asset.includes("MF") || asset.includes("MUTUAL")) m += tx.amount;
+        else if (asset.includes("GOLD")) g += tx.amount;
+        else s += tx.amount;
+      }
+    });
+    return { calcSavings: s, calcMf: m, calcGold: g };
+  }, [rawTransactions]);
 
   const weeklyData = useMemo(() => {
     if (!rawTransactions) return [];
@@ -84,11 +89,11 @@ export default function Dashboard() {
   };
   const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
-  if (isLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
-  if (isError || !data) return <AppLayout><p className="text-red-400 p-8">Failed to load data.</p></AppLayout>;
+  if (isDashLoading || isLedgerLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
 
-  const goldValue = data.goldGrams * 7500;
-  const totalWealth = data.totalSavings + data.mfUnits + goldValue;
+  const bankBalance = Number(dashData?.bankBalance || 0);
+  const totalPayments = Number(dashData?.totalInvested || dashData?.totalPayments || 0);
+  const totalWealth = calcSavings + calcMf + calcGold;
   
   if (totalWealth >= 1000 && !localStorage.getItem("milestone1k")) {
     setShowConfetti(true);
@@ -96,10 +101,8 @@ export default function Dashboard() {
     setTimeout(() => setShowConfetti(false), 6000);
   }
 
-  const goalTarget = 2000;
-  const goalProgress = Math.min((totalWealth / goalTarget) * 100, 100);
-  const maxVisualCoins = 60; 
-  const coinsToRender = Math.floor((goalProgress / 100) * maxVisualCoins);
+  const goalTarget = 200;
+  const coinsToRender = Math.min(Math.floor(totalWealth), goalTarget);
   const coinsArray = Array.from({ length: coinsToRender }, (_, i) => i);
 
   return (
@@ -132,14 +135,14 @@ export default function Dashboard() {
             <div className="flex justify-between items-center relative z-10">
               <div>
                 <p className="text-xs text-gray-400 font-semibold mb-1 uppercase tracking-widest">Virtual Balance</p>
-                <h3 className="text-2xl font-black text-white"><AnimatedNumber value={data.bankBalance} /></h3>
+                <h3 className="text-2xl font-black text-white"><AnimatedNumber value={bankBalance} /></h3>
               </div>
               <button onClick={() => setShowTopUpModal(true)} className="w-9 h-9 bg-payae-orange/20 text-payae-orange rounded-xl flex items-center justify-center hover:bg-payae-orange hover:text-black transition-colors shrink-0"><Plus className="w-4 h-4" /></button>
             </div>
           </motion.div>
-          <StatCard title="Total Payments" value={data.totalPayments} prefix="₹" />
-          <StatCard title="Liquid Savings" value={data.totalSavings} prefix="₹" highlight />
-          <StatCard title="Mutual Fund Units" value={data.mfUnits} />
+          <StatCard title="Total Payments" value={totalPayments} prefix="₹" />
+          <StatCard title="Liquid Savings" value={calcSavings} prefix="₹" highlight />
+          <StatCard title="Mutual Funds" value={calcMf} prefix="₹" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
@@ -169,41 +172,45 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
-          <div className="h-[320px] bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl relative overflow-hidden flex flex-col justify-between group">
-            <div className="absolute inset-0 bg-gradient-to-t from-payae-orange/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="h-[320px] bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl relative flex flex-col justify-between group overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-t from-payae-orange/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none z-0" />
             <div className="relative z-10 flex justify-between items-start mb-4">
               <div>
-                 <h2 className="text-lg font-bold text-white flex items-center gap-2"><Target className="text-payae-orange w-5 h-5"/> Dream Setup Goal</h2>
+                 <h2 className="text-lg font-bold text-white flex items-center gap-2"><Target className="text-payae-orange w-5 h-5"/> Goal Tracking</h2>
                  <p className="text-xs text-gray-400 mt-1">₹{totalWealth.toFixed(0)} / ₹{goalTarget}</p>
               </div>
             </div>
             
-            <div className="relative w-32 h-44 mx-auto mt-auto flex flex-col justify-end items-center">
-               <div className="w-16 h-3 bg-gray-800 border-2 border-gray-700 rounded-t-md absolute -top-3 z-20" />
-               <div className="w-full h-full border-4 border-white/20 rounded-b-3xl rounded-t-lg relative overflow-hidden bg-white/5 backdrop-blur-sm shadow-[inset_0_0_20px_rgba(255,255,255,0.1)]">
+            <div className="relative w-32 h-48 mx-auto mt-auto flex flex-col justify-end items-center z-10">
+               <div className="w-16 h-3 bg-gray-800 border-2 border-gray-700 rounded-t-md absolute -top-3 z-30" />
+               <div className="w-full h-full border-4 border-white/20 rounded-b-3xl rounded-t-lg relative overflow-hidden bg-white/5 backdrop-blur-sm shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
                  
                  {coinsArray.map((coin, i) => {
-                   const row = Math.floor(i / 3); 
-                   const col = i % 3;
-                   const offset = row % 2 === 0 ? 0 : 8;
-                   
+                   const cols = 6; 
+                   const row = Math.floor(i / cols); 
+                   const col = i % cols;
+                   const randomXJitter = Math.random() * 4 - 2; 
+                   const randomYJitter = Math.random() * 3 - 1.5;
+                   const xOffset = col * 16 + (row % 2 === 0 ? 0 : 8) + randomXJitter;
+                   const yOffset = row * 4 + 2 + randomYJitter;
+
                    return (
                      <motion.div 
                        key={coin}
-                       initial={{ y: -250, opacity: 0, rotate: Math.random() * 180 }}
+                       initial={{ y: -400, opacity: 0, rotate: Math.random() * 360 }}
                        animate={{ y: 0, opacity: 1, rotate: Math.random() * 20 - 10 }}
                        transition={{ 
                          type: "spring", 
-                         stiffness: 100, 
-                         damping: 10, 
-                         mass: 1,
-                         delay: i * 0.08 
+                         stiffness: 120, 
+                         damping: 8,   
+                         mass: 1.5,      
+                         delay: Math.min(i * 0.02, 2.5) 
                        }}
-                       className="absolute w-8 h-3 bg-gradient-to-b from-yellow-300 to-yellow-600 border border-yellow-700 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                       className="absolute w-8 h-2.5 bg-gradient-to-b from-yellow-300 to-yellow-600 border border-yellow-700 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20"
                        style={{ 
-                         bottom: `${row * 6 + 4}px`, 
-                         left: `${col * 30 + offset + 8}px`,
-                         zIndex: i
+                         bottom: `${yOffset}px`, 
+                         left: `${xOffset}px`,
+                         zIndex: i 
                        }}
                      />
                    );
