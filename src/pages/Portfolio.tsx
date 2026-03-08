@@ -7,11 +7,11 @@ import { Wallet, TrendingUp, Coins, Loader2, PieChart } from "lucide-react";
 type PortfolioData = { savingsBalance: number; mutualFundUnits: number; goldGrams: number; };
 
 const fetchPortfolio = async (): Promise<PortfolioData> => {
-  const response = await api.get("/api/v1/portfolio");
+  const response = await api.get("/api/dashboard");
   const data = response.data?.data || response.data;
   return {
-    savingsBalance: data.savingsBalance || 0,
-    mutualFundUnits: data.mutualFundUnits || data.mfUnits || data.mf || 0,
+    savingsBalance: data.savingsBalance || data.savings || 0,
+    mutualFundUnits: data.mutualFundUnits || data.mutualFunds || data.mfUnits || data.mf || 0,
     goldGrams: data.goldGrams || data.gold || 0,
   };
 };
@@ -22,11 +22,15 @@ export default function Portfolio() {
   if (isLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
   if (isError || !data) return <AppLayout><p className="text-red-400 text-center mt-10">Failed to load Portfolio data.</p></AppLayout>;
 
-  const goldValueInRupees = data.goldGrams * 7500;
-  const totalWealth = data.savingsBalance + data.mutualFundUnits + goldValueInRupees;
+  const safeSavings = Number(data.savingsBalance) || 0;
+  const safeMf = Number(data.mutualFundUnits) || 0;
+  const safeGoldGrams = Number(data.goldGrams) || 0;
 
-  const savPct = totalWealth > 0 ? (data.savingsBalance / totalWealth) * 100 : 0;
-  const mfPct = totalWealth > 0 ? (data.mutualFundUnits / totalWealth) * 100 : 0;
+  const goldValueInRupees = safeGoldGrams * 7500;
+  const totalWealth = safeSavings + safeMf + goldValueInRupees;
+
+  const savPct = totalWealth > 0 ? (safeSavings / totalWealth) * 100 : 0;
+  const mfPct = totalWealth > 0 ? (safeMf / totalWealth) * 100 : 0;
   const goldPct = totalWealth > 0 ? (goldValueInRupees / totalWealth) * 100 : 0;
 
   return (
@@ -75,7 +79,7 @@ export default function Portfolio() {
             </div>
             <div>
               <h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Liquid Savings</h3>
-              <p className="text-3xl font-black text-white">₹{data.savingsBalance.toFixed(2)}</p>
+              <p className="text-3xl font-black text-white">₹{safeSavings.toFixed(2)}</p>
             </div>
           </motion.div>
 
@@ -86,7 +90,7 @@ export default function Portfolio() {
             </div>
             <div>
               <h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Mutual Funds</h3>
-              <p className="text-3xl font-black text-white">₹{data.mutualFundUnits.toFixed(2)}</p>
+              <p className="text-3xl font-black text-white">₹{safeMf.toFixed(2)}</p>
             </div>
           </motion.div>
 
@@ -102,7 +106,7 @@ export default function Portfolio() {
               </div>
               <div className="text-right">
                 <span className="text-gray-500 text-[10px] block mb-0.5 uppercase tracking-wider">Holdings</span>
-                <span className="text-white font-bold text-sm">{data.goldGrams.toFixed(4)}g</span>
+                <span className="text-white font-bold text-sm">{safeGoldGrams.toFixed(4)}g</span>
               </div>
             </div>
           </motion.div>

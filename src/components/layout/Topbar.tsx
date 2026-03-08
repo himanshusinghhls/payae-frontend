@@ -63,7 +63,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
   const getPageTitle = () => {
     switch(location.pathname) {
-      case '/dashboard': return { title: `Welcome back, ${formattedName}`, sub: "Here is your wealth overview for today." };
+      case '/dashboard': return { title: `Welcome, ${formattedName}`, sub: "Here is your wealth overview for today." };
       case '/portfolio': return { title: "Wealth Portfolio", sub: "Analyze your asset distribution." };
       case '/payment': return { title: "Secure Checkout", sub: "Send money and auto-invest." };
       case '/ledger': return { title: "Smart Ledger", sub: "Your transaction history." };
