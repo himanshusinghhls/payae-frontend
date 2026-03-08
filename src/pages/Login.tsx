@@ -70,7 +70,7 @@ export default function Login() {
           <span className="text-payae-orange">E</span>
         </h1>
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-300 text-sm font-semibold">
-          <Sparkles className="w-4 h-4 text-payae-accent" /> Smart Wealth Generation
+          <Sparkles className="w-4 h-4 text-payae-accent" /> A Little Extra Today, A Lot Tomorrow
         </div>
       </div>
 
@@ -80,7 +80,7 @@ export default function Login() {
             <motion.div key={isLogin ? "login" : "register"} initial={{ opacity: 0, x: isLogin ? -20 : 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: isLogin ? 20 : -20 }} transition={{ duration: 0.3 }}>
               
               <h2 className="text-2xl font-bold text-white mb-6">
-                {isLogin ? "Welcome back" : "Create your account"}
+                {isLogin ? "Welcome!!" : "Create your account"}
               </h2>
 
               <form className="space-y-4" onSubmit={handleSubmit}>

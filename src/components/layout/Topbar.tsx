@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Search, LogOut, User as UserIcon, Menu, ArrowUpRight, ArrowDownLeft, X, Lock, Loader2, CheckCircle } from "lucide-react";
+import { Bell, Search, LogOut, User as UserIcon, Menu, ArrowUpRight, ArrowDownLeft, X, Lock, Loader2, CheckCircle, QrCode } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/client";
 import toast from "react-hot-toast";
 import { Settings as SettingsIcon } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 const fetchProfile = async () => {
   const response = await api.get("/api/users/me");
@@ -27,6 +28,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
 
   const [editName, setEditName] = useState("");
   const [editPassword, setEditPassword] = useState("");
@@ -37,6 +39,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const displayEmail = profile?.email || "user@payae.com";
   const actualName = profile?.name || displayEmail.split('@')[0];
   const formattedName = actualName.charAt(0).toUpperCase() + actualName.slice(1);
+  const upiString = `upi://pay?pa=${displayEmail}&pn=${encodeURIComponent(actualName)}`;
 
   const recentActivity = (transactions || [])
     .filter((t: any) => t.type?.includes("PAYMENT"))
@@ -141,6 +144,11 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                     <p className="text-white font-bold text-sm truncate">{formattedName}</p>
                     <p className="text-gray-400 text-xs truncate">{displayEmail}</p>
                   </div>
+                  
+                  <button onClick={() => { setShowProfileMenu(false); setShowQrModal(true); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-payae-accent hover:bg-payae-accent/10 rounded-lg transition-colors font-semibold">
+                    <QrCode className="w-4 h-4" /> Display My QR
+                  </button>
+
                   <button onClick={openEditModal} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                     <UserIcon className="w-4 h-4" /> Edit Profile
                   </button>
@@ -156,6 +164,29 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showQrModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowQrModal(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-gradient-to-b from-white/10 to-black/80 border border-white/20 p-8 rounded-[40px] shadow-[0_30px_80px_rgba(0,229,255,0.2)] w-full max-w-sm z-10 backdrop-blur-xl text-center">
+              <button onClick={() => setShowQrModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-white bg-white/5 p-2 rounded-full transition-colors"><X size={20}/></button>
+              
+              <div className="w-16 h-16 mx-auto bg-gradient-to-tr from-payae-accent to-blue-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(0,229,255,0.4)]">
+                 <QrCode className="text-black w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-black text-white mb-1">{formattedName}</h3>
+              <p className="text-payae-accent text-sm font-bold tracking-widest mb-8 truncate px-2">{displayEmail}</p>
+              
+              <div className="bg-white p-4 rounded-3xl inline-block mx-auto shadow-2xl mb-6">
+                <QRCodeSVG value={upiString} size={200} level="H" includeMargin={false} />
+              </div>
+              
+              <p className="text-gray-400 text-xs">Scan using any PayAE camera to directly auto-fill payment details.</p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showEditProfile && (

@@ -9,6 +9,9 @@ import Portfolio from "../pages/Portfolio";
 import Payment from "../pages/Payment";
 import Settings from "../pages/Settings";
 import Ledger from "../pages/Ledger";
+import Contact from "../pages/Contact";
+import Privacy from "../pages/Privacy";
+import Terms from "../pages/Terms";
 import ProtectedRoute from "./ProtectedRoute";
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -25,6 +28,9 @@ export default function AppRoutes() {
         <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
         <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />

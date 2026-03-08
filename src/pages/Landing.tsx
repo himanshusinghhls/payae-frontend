@@ -192,9 +192,9 @@ export default function Landing() {
          <div className="flex flex-col md:flex-row justify-center items-center gap-8 text-sm text-gray-500 font-medium">
             <span>&copy; {new Date().getFullYear()} PayAE Inc.</span>
             <span className="hidden md:block text-gray-800">|</span>
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms & Conditions</a>
-            <a href="#" className="hover:text-white transition-colors">Contact Support</a>
+            <button onClick={() => navigate('/privacy')} className="hover:text-white transition-colors">Privacy Policy</button>
+            <button onClick={() => navigate('/terms')} className="hover:text-white transition-colors">Terms & Conditions</button>
+            <button onClick={() => navigate('/contact')} className="hover:text-payae-accent transition-colors font-bold">Contact Us</button>
          </div>
       </footer>
     </div>
