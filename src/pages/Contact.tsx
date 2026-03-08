@@ -39,7 +39,7 @@ const DeveloperCard = ({ name, role, description, email, github, linkedin, leetc
         </p>
 
         <div style={{ transform: "translateZ(50px)" }} className="flex items-center gap-4 mt-6">
-          <a href={github} target="_blank" rel="noreferrer" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/20 hover:text-white transition-colors text-gray-400"><Github className="w-5 h-5"/></a>
+          <a href={github} target="_blank" rel="noreferrer" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-[#238636] hover:text-white transition-colors text-gray-400"><Github className="w-5 h-5"/></a>
           <a href={linkedin} target="_blank" rel="noreferrer" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-[#0A66C2] hover:text-white transition-colors text-gray-400"><Linkedin className="w-5 h-5"/></a>
           <a href={leetcode} target="_blank" rel="noreferrer" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-[#FFA116] hover:text-white transition-colors text-gray-400"><Code2 className="w-5 h-5"/></a>
           <a href={`mailto:${email}`} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-[#FF8A65] hover:text-white transition-colors text-gray-400"><Mail className="w-5 h-5"/></a>
@@ -76,7 +76,7 @@ export default function Contact() {
           <DeveloperCard 
             name="Himanshu Singh" 
             role="Co-Founder & Core Engineer" 
-            description="Full-stack engineer with a strong command of algorithmic problem-solving. Passionate about architecting scalable backend systems and delivering seamless frontend experiences."
+            description="Full-stack builder obsessed with logic and performance. I architect the heavy backend engines that power PayAE, ensuring every user interaction feels lightning-fast and flawless."
             email="himanshusinghhls@gmail.com"
             github="https://github.com/himanshusinghhls" 
             linkedin="https://www.linkedin.com/in/himanshusinghhls/" 
@@ -86,7 +86,7 @@ export default function Contact() {
           <DeveloperCard 
             name="Anjali Rani" 
             role="Co-Founder & Core Engineer" 
-            description="Full-stack engineer driven by complex problem-solving. Dedicated to engineering robust database infrastructures and highly interactive, performant user interfaces."
+            description="Full-stack creator passionate about where data meets design. I engineer the rock-solid databases beneath PayAE and bring them to life through breathtaking, interactive web experiences."
             email="anjalirani4343@gmail.com"
             github="https://github.com/anjalir111" 
             linkedin="https://www.linkedin.com/in/anjali-rani-237604323/" 
