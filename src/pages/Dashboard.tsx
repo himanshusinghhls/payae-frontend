@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
 import { motion, AnimatePresence } from "framer-motion";
 import AppLayout from "../components/layout/AppLayout";
 import StatCard from "../components/ui/StatCard";
-import PortfolioChart from "../components/charts/PortfolioChart";
 import AnimatedNumber from "../components/ui/AnimatedNumber";
-import { Plus, Loader2, X, Wallet, TrendingUp, Coins } from "lucide-react";
+import { Plus, Loader2, X, Wallet, TrendingUp, Coins, BarChart3 } from "lucide-react";
 import toast from "react-hot-toast";
 
 type DashboardData = { bankBalance: number; totalPayments: number; totalSavings: number; mfUnits: number; goldGrams: number; };
@@ -26,6 +25,7 @@ const fetchDashboard = async (): Promise<DashboardData> => {
 export default function Dashboard() {
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard, refetchInterval: 10000 });
+  const { data: rawTransactions } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
   
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number>(1000);
@@ -40,6 +40,32 @@ export default function Dashboard() {
     },
     onError: () => toast.error("Failed to top up wallet.")
   });
+
+  const weeklyData = useMemo(() => {
+    if (!rawTransactions) return [];
+    
+    const days = Array.from({length: 7}, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return { 
+        dateString: d.toISOString().split('T')[0], 
+        label: d.toLocaleDateString('en-US', { weekday: 'short' }), 
+        total: 0 
+      };
+    });
+
+    rawTransactions.forEach((tx: any) => {
+      if (tx.type === "ROUND_UP") {
+        const txDate = tx.timestamp.split('T')[0];
+        const dayMatch = days.find(d => d.dateString === txDate);
+        if (dayMatch) dayMatch.total += tx.amount;
+      }
+    });
+
+    return days;
+  }, [rawTransactions]);
+
+  const maxDailyValue = Math.max(...weeklyData.map(d => d.total), 50);
 
   if (isLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
   if (isError || !data) return <AppLayout><p className="text-red-400 p-8">Failed to load data.</p></AppLayout>;
@@ -61,16 +87,13 @@ export default function Dashboard() {
                 <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Top Up Wallet</h3>
                 <p className="text-gray-400 text-xs md:text-sm mb-6">Add virtual funds to continue simulating transactions.</p>
-                
                 <div className="mb-6">
                   <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2">
-                    <span>Amount</span>
-                    <span className="text-white font-bold">₹{topUpAmount}</span>
+                    <span>Amount</span><span className="text-white font-bold">₹{topUpAmount}</span>
                   </div>
                   <input type="range" min="100" max="10000" step="100" value={topUpAmount} onChange={(e) => setTopUpAmount(Number(e.target.value))} className="w-full accent-payae-accent" />
                   <div className="flex justify-between text-[10px] md:text-xs text-gray-500 mt-2"><span>₹100</span><span>₹10,000</span></div>
                 </div>
-
                 <button onClick={() => topUpMutation.mutate()} disabled={topUpMutation.isPending} className="w-full bg-gradient-to-r from-payae-accent to-blue-500 text-black font-bold py-3 rounded-xl hover:opacity-90 transition-opacity flex justify-center items-center text-sm md:text-base">
                   {topUpMutation.isPending ? <Loader2 className="animate-spin" /> : `Add ₹${topUpAmount}`}
                 </button>
@@ -92,15 +115,44 @@ export default function Dashboard() {
               </button>
             </div>
           </motion.div>
-          
           <StatCard title="Total Payments" value={data.totalPayments} prefix="₹" />
           <StatCard title="Liquid Savings" value={data.totalSavings} prefix="₹" highlight />
           <StatCard title="Mutual Fund Units" value={data.mfUnits} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
-          <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-5 rounded-2xl shadow-xl relative overflow-hidden h-[320px] flex flex-col">
-            <PortfolioChart />
+          
+          <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl h-[320px] flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-[-50%] left-[-20%] w-64 h-64 bg-payae-success/10 rounded-full blur-[80px] pointer-events-none" />
+            <div>
+              <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-payae-success" /> 7-Day Velocity
+              </h2>
+              <p className="text-gray-400 text-xs mb-6">Your recent automated wealth generation.</p>
+            </div>
+
+            <div className="flex items-end justify-between h-40 gap-2 mt-auto relative z-10">
+              {weeklyData.map((day, idx) => {
+                const heightPct = (day.total / maxDailyValue) * 100;
+                const isToday = idx === 6;
+                return (
+                  <div key={idx} className="flex flex-col items-center w-full group">
+                    <div className="w-full relative flex justify-center items-end h-full mb-2">
+                      <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-white text-[10px] font-bold py-1 px-2 rounded -top-8 whitespace-nowrap z-20">
+                        ₹{day.total.toFixed(2)}
+                      </div>
+                      <motion.div 
+                        initial={{ height: 0 }} 
+                        animate={{ height: `${Math.max(heightPct, 2)}%` }} 
+                        transition={{ duration: 1, delay: idx * 0.1 }}
+                        className={`w-full max-w-[2.5rem] rounded-t-md transition-colors ${isToday ? 'bg-gradient-to-t from-payae-success/50 to-payae-success shadow-[0_0_15px_rgba(0,255,148,0.3)]' : 'bg-white/10 hover:bg-white/20'}`} 
+                      />
+                    </div>
+                    <span className={`text-[10px] uppercase font-bold tracking-wider ${isToday ? 'text-payae-success' : 'text-gray-500'}`}>{day.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </motion.div>
           
           <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-5 rounded-2xl shadow-xl h-[320px] flex flex-col justify-between">
@@ -109,7 +161,6 @@ export default function Dashboard() {
                 <span className="w-1.5 h-1.5 rounded-full bg-payae-accent animate-pulse" /> Portfolio Distribution
               </h2>
               <p className="text-gray-400 text-xs mb-4">Total Value: <span className="text-white font-bold">₹{totalWealth.toFixed(2)}</span></p>
-              
               <div className="w-full h-3.5 bg-gray-800 rounded-full flex overflow-hidden shadow-inner border border-white/5 mb-5">
                 <motion.div initial={{ width: 0 }} animate={{ width: `${savPct}%` }} transition={{ duration: 1 }} className="h-full bg-[#00E5FF]" />
                 <motion.div initial={{ width: 0 }} animate={{ width: `${mfPct}%` }} transition={{ duration: 1, delay: 0.2 }} className="h-full bg-[#00FF94]" />
@@ -135,6 +186,7 @@ export default function Dashboard() {
                </div>
             </div>
           </motion.div>
+
         </div>
       </div>
     </AppLayout>

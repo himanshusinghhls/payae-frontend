@@ -1,28 +1,58 @@
 import { useState } from "react";
-import { Bell, Search, LogOut, User as UserIcon, Menu } from "lucide-react";
+import { Bell, Search, LogOut, User as UserIcon, Menu, ArrowUpRight, ArrowDownLeft, X, Lock, Loader2, CheckCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../api/client";
+import toast from "react-hot-toast";
+import { Settings as SettingsIcon } from "lucide-react";
 
-const fetchProfile = async () => {
-  const response = await api.get("/api/users/me");
-  return response.data;
-};
+const fetchProfile = async () => { const res = await api.get("/api/users/me"); return res.data; };
+const fetchTransactions = async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; };
 
 export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
+  
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+
+  const [editName, setEditName] = useState("");
+  const [editPassword, setEditPassword] = useState("");
 
   const { data: profile } = useQuery({ queryKey: ['userProfile'], queryFn: fetchProfile, staleTime: 300000 });
+  const { data: transactions } = useQuery({ queryKey: ['ledger'], queryFn: fetchTransactions });
 
   const displayEmail = profile?.email || "user@payae.com";
   const actualName = profile?.name || displayEmail.split('@')[0];
   const formattedName = actualName.charAt(0).toUpperCase() + actualName.slice(1);
+
+  const recentActivity = (transactions || [])
+    .filter((t: any) => t.type?.includes("PAYMENT"))
+    .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 3);
+
+  const unreadCount = recentActivity.length > 0 ? recentActivity.length : 0;
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async () => {
+      const payload: any = {};
+      if (editName) payload.name = editName;
+      if (editPassword) payload.password = editPassword;
+      await api.put("/api/users/profile", payload);
+    },
+    onSuccess: () => {
+      toast.success("Profile updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      setShowEditProfile(false);
+      setEditPassword("");
+    },
+    onError: () => toast.error("Failed to update profile.")
+  });
 
   const getPageTitle = () => {
     switch(location.pathname) {
@@ -37,66 +67,128 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
 
   const pageInfo = getPageTitle();
 
+  const openEditModal = () => {
+    setEditName(actualName);
+    setShowProfileMenu(false);
+    setShowEditProfile(true);
+  };
+
   return (
-    <div className="h-20 backdrop-blur-md bg-payae-bg/80 border-b border-payae-border flex items-center justify-between px-4 md:px-8 sticky top-0 z-30">
-      
-      <div className="flex items-center gap-4">
-        <button onClick={onMenuClick} className="md:hidden text-gray-400 hover:text-white transition-colors">
-          <Menu className="w-6 h-6" />
-        </button>
-        <div>
-          <h2 className="text-lg md:text-xl font-bold text-white truncate max-w-[200px] md:max-w-none">
-            {pageInfo.title}
-          </h2>
-          <p className="text-xs md:text-sm text-gray-400 hidden md:block">{pageInfo.sub}</p>
+    <>
+      <div className="h-20 backdrop-blur-md bg-payae-bg/80 border-b border-payae-border flex items-center justify-between px-4 md:px-8 sticky top-0 z-30">
+        <div className="flex items-center gap-4">
+          <button onClick={onMenuClick} className="md:hidden text-gray-400 hover:text-white transition-colors"><Menu className="w-6 h-6" /></button>
+          <div>
+            <h2 className="text-lg md:text-xl font-bold text-white truncate max-w-[200px] md:max-w-none">{pageInfo.title}</h2>
+            <p className="text-xs md:text-sm text-gray-400 hidden md:block">{pageInfo.sub}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 md:gap-6 relative">
+          <div className="relative hidden lg:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+            <input type="text" placeholder="Search..." className="bg-black/20 border border-payae-border rounded-full py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-payae-accent w-64" />
+          </div>
+
+          <div className="relative">
+            <button onClick={() => { setShowNotifications(!showNotifications); setShowProfileMenu(false); }} className="relative text-gray-400 hover:text-white transition-colors">
+              <Bell className="w-6 h-6" />
+              {unreadCount > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-payae-orange rounded-full border-2 border-payae-bg"></span>}
+            </button>
+            
+            <AnimatePresence>
+              {showNotifications && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-[-40px] md:right-0 mt-4 w-80 bg-black/80 border border-white/10 backdrop-blur-3xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-4 z-40">
+                  <h3 className="text-white font-bold mb-3 border-b border-white/10 pb-2">Recent Activity</h3>
+                  <div className="space-y-3">
+                    {recentActivity.length > 0 ? recentActivity.map((t: any) => (
+                      <div key={t.id} className="flex items-center gap-3">
+                         <div className={`p-2 rounded-xl ${t.type === 'PAYMENT_RECEIVED' ? 'bg-payae-success/20 text-payae-success' : t.type === 'PAYMENT_FAILED' ? 'bg-red-500/20 text-red-500' : 'bg-blue-500/20 text-blue-400'}`}>
+                           {t.type === 'PAYMENT_RECEIVED' ? <ArrowDownLeft className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
+                         </div>
+                         <div>
+                           <p className="text-xs font-bold text-white truncate max-w-[200px]">
+                             {t.type === 'PAYMENT_RECEIVED' ? 'Received Money' : t.type === 'PAYMENT_FAILED' ? 'Payment Failed' : `Paid ${t.description || t.payeeName || 'User'}`}
+                           </p>
+                           <p className="text-[10px] text-gray-400">{t.type === 'PAYMENT_RECEIVED' ? '+' : '-'}₹{t.amount.toFixed(2)}</p>
+                         </div>
+                      </div>
+                    )) : <p className="text-sm text-gray-400">All caught up! No new alerts.</p>}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="relative">
+            <button onClick={() => { setShowProfileMenu(!showProfileMenu); setShowNotifications(false); }} className="w-10 h-10 rounded-full bg-gradient-to-tr from-payae-accent to-blue-600 flex items-center justify-center shadow-lg border border-white/10 shrink-0">
+              <span className="text-white font-bold text-sm">{formattedName.charAt(0).toUpperCase()}</span>
+            </button>
+
+            <AnimatePresence>
+              {showProfileMenu && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-56 bg-black/80 border border-white/10 backdrop-blur-3xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-2 z-40 overflow-hidden">
+                  <div className="p-3 border-b border-white/10 mb-2">
+                    <p className="text-white font-bold text-sm truncate">{formattedName}</p>
+                    <p className="text-gray-400 text-xs truncate">{displayEmail}</p>
+                  </div>
+                  
+                  <button onClick={openEditModal} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                    <UserIcon className="w-4 h-4" /> Edit Profile
+                  </button>
+
+                  <button onClick={() => { setShowProfileMenu(false); navigate('/settings'); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                    <SettingsIcon className="w-4 h-4" /> Allocation Rules
+                  </button>
+                  <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors mt-1">
+                    <LogOut className="w-4 h-4" /> Sign Out
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 md:gap-6 relative">
-        <div className="relative hidden lg:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-          <input type="text" placeholder="Search..." className="bg-black/20 border border-payae-border rounded-full py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-payae-accent w-64" />
-        </div>
-
-        <div className="relative">
-          <button onClick={() => setShowNotifications(!showNotifications)} className="relative text-gray-400 hover:text-white transition-colors">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-payae-orange rounded-full border-2 border-payae-bg"></span>
-          </button>
-          
-          <AnimatePresence>
-            {showNotifications && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-[-40px] md:right-0 mt-4 w-72 bg-black/60 border border-white/10 backdrop-blur-3xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-4 z-40">
-                <h3 className="text-white font-bold mb-3 border-b border-white/10 pb-2">Notifications</h3>
-                <p className="text-sm text-gray-400">All caught up! No new alerts.</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="relative">
-          <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="w-10 h-10 rounded-full bg-gradient-to-tr from-payae-accent to-blue-600 flex items-center justify-center shadow-lg border border-white/10 shrink-0">
-            <span className="text-white font-bold text-sm">{formattedName.charAt(0).toUpperCase()}</span>
-          </button>
-
-          <AnimatePresence>
-            {showProfileMenu && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-56 bg-black/60 border border-white/10 backdrop-blur-3xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-2 z-40 overflow-hidden">
-                <div className="p-3 border-b border-white/10 mb-2">
-                  <p className="text-white font-bold text-sm truncate">{formattedName}</p>
-                  <p className="text-gray-400 text-xs truncate">{displayEmail}</p>
+      <AnimatePresence>
+        {showEditProfile && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowEditProfile(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-black/80 border border-white/10 p-6 rounded-3xl shadow-2xl w-full max-w-sm z-10 backdrop-blur-xl">
+              <button onClick={() => setShowEditProfile(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
+              <h3 className="text-xl font-bold text-white mb-6">Edit Profile</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2 block">Display Name</label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:border-payae-accent outline-none" />
+                  </div>
                 </div>
-                <button onClick={() => { setShowProfileMenu(false); navigate('/settings'); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-                  <UserIcon className="w-4 h-4" /> Allocation Settings
+
+                <div>
+                  <label className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2 block">New Password (Optional)</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+                    <input type="password" placeholder="Leave blank to keep current" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:border-payae-accent outline-none" />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <label className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2 block">Account Email</label>
+                  <input type="email" value={displayEmail} disabled className="w-full bg-black/40 border border-white/5 rounded-xl py-3 px-4 text-gray-500 cursor-not-allowed" />
+                  <p className="text-[10px] text-gray-500 mt-1">Email cannot be changed directly.</p>
+                </div>
+
+                <button onClick={() => updateProfileMutation.mutate()} disabled={updateProfileMutation.isPending} className="w-full mt-4 bg-gradient-to-r from-payae-accent to-blue-500 text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90">
+                  {updateProfileMutation.isPending ? <Loader2 className="animate-spin w-5 h-5"/> : <><CheckCircle className="w-5 h-5"/> Save Changes</>}
                 </button>
-                <button onClick={() => { logout(); navigate('/login'); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors mt-1">
-                  <LogOut className="w-4 h-4" /> Sign Out
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
