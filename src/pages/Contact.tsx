@@ -36,7 +36,7 @@ const DeveloperCard = ({ name, role, email, github, linkedin, leetcode, delay }:
         <p style={{ transform: "translateZ(30px)" }} className="text-sm font-bold text-payae-accent uppercase tracking-widest mb-6">{role}</p>
 
         <p style={{ transform: "translateZ(20px)" }} className="text-gray-400 text-sm mb-auto">
-          Passionate about architecting seamless fintech solutions and pushing the boundaries of web development.
+          Description.
         </p>
 
         <div style={{ transform: "translateZ(50px)" }} className="flex items-center gap-4 mt-6">
@@ -55,7 +55,6 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-[#0A0F1C] text-white relative overflow-hidden flex flex-col">
-      {/* Background Ambience */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-payae-accent/10 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[150px] pointer-events-none" />
 
@@ -77,20 +76,20 @@ export default function Contact() {
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 lg:gap-16 w-full">
           <DeveloperCard 
             name="Anjali Rani" 
-            role="Founder & Lead Engineer" 
-            email="anjali@example.com"
-            github="#" 
-            linkedin="#" 
-            leetcode="#"
+            role="Co-Founder" 
+            email="anjalirani4343@gmail.com"
+            github="https://github.com/anjalir111" 
+            linkedin="https://www.linkedin.com/in/anjali-rani-237604323/" 
+            leetcode="https://leetcode.com/u/anjali_rani_111111/"
             delay={0.1}
           />
           <DeveloperCard 
-            name="Partner / Co-Founder" 
-            role="Operations & Strategy" 
-            email="cofounder@example.com"
-            github="#" 
-            linkedin="#" 
-            leetcode="#"
+            name="Himanshu Singh" 
+            role="Co-Founder" 
+            email="himanshusinghhls@egmail.com"
+            github="https://github.com/himanshusinghhls" 
+            linkedin="https://www.linkedin.com/in/himanshusinghhls/" 
+            leetcode="https://leetcode.com/u/himanshusinghhls/"
             delay={0.3}
           />
         </div>
