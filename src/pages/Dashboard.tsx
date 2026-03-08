@@ -189,29 +189,18 @@ export default function Dashboard() {
                    const cols = 6; 
                    const row = Math.floor(i / cols); 
                    const col = i % cols;
-                   const randomXJitter = Math.random() * 4 - 2; 
-                   const randomYJitter = Math.random() * 3 - 1.5;
-                   const xOffset = col * 16 + (row % 2 === 0 ? 0 : 8) + randomXJitter;
-                   const yOffset = row * 4 + 2 + randomYJitter;
+                   const randomX = col * 16 + (row % 2 === 0 ? 0 : 8) + (Math.random() * 4 - 2);
+                   const randomY = row * 4 + 2 + (Math.random() * 3 - 1.5);
+                   const randomRotation = Math.random() * 360;
 
                    return (
-                     <motion.div 
+                     <motion.div
                        key={coin}
-                       initial={{ y: -400, opacity: 0, rotate: Math.random() * 360 }}
-                       animate={{ y: 0, opacity: 1, rotate: Math.random() * 20 - 10 }}
-                       transition={{ 
-                         type: "spring", 
-                         stiffness: 120, 
-                         damping: 8,   
-                         mass: 1.5,      
-                         delay: Math.min(i * 0.02, 2.5) 
-                       }}
-                       className="absolute w-8 h-2.5 bg-gradient-to-b from-yellow-300 to-yellow-600 border border-yellow-700 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20"
-                       style={{ 
-                         bottom: `${yOffset}px`, 
-                         left: `${xOffset}px`,
-                         zIndex: i 
-                       }}
+                       initial={{ y: -200 - Math.random() * 100, opacity: 0, rotate: randomRotation, scale: 0.7 + Math.random() * 0.3 }}
+                       animate={{ y: randomY, opacity: 1, rotate: randomRotation + 20 }}
+                       transition={{ type: "spring", damping: 8, stiffness: 120, mass: 1, delay: i * 0.03 }}
+                       className="absolute w-6 h-2.5 bg-gradient-to-b from-yellow-300 to-yellow-500 border border-yellow-700 rounded-full shadow-lg"
+                       style={{ left: randomX }}
                      />
                    );
                  })}
