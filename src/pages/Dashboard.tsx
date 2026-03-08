@@ -84,12 +84,18 @@ export default function Dashboard() {
   };
   const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
-  if (isLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-blue-600 dark:text-payae-accent" /></div></AppLayout>;
-  if (isError || !data) return <AppLayout><p className="text-red-500 p-8">Failed to load data.</p></AppLayout>;
+  if (isLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
+  if (isError || !data) return <AppLayout><p className="text-red-400 p-8">Failed to load data.</p></AppLayout>;
 
   const goldValue = data.goldGrams * 7500;
   const totalWealth = data.totalSavings + data.mfUnits + goldValue;
   
+  if (totalWealth >= 1000 && !localStorage.getItem("milestone1k")) {
+    setShowConfetti(true);
+    localStorage.setItem("milestone1k", "true");
+    setTimeout(() => setShowConfetti(false), 6000);
+  }
+
   const goalTarget = 2000;
   const goalProgress = Math.min((totalWealth / goalTarget) * 100, 100);
   const maxVisualCoins = 60; 
@@ -106,14 +112,14 @@ export default function Dashboard() {
           {showTopUpModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowTopUpModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-              <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-white dark:bg-payae-card border border-gray-200 dark:border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md z-10">
-                <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 dark:hover:text-white"><X size={20}/></button>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Top Up Wallet</h3>
+              <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-payae-card border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md z-10">
+                <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
+                <h3 className="text-xl font-bold text-white mb-2">Top Up Wallet</h3>
                 <div className="mb-6 mt-4">
-                  <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-2"><span>Amount</span><span className="text-gray-900 dark:text-white font-bold">₹{topUpAmount}</span></div>
-                  <input type="range" min="100" max="10000" step="100" value={topUpAmount} onChange={(e) => setTopUpAmount(Number(e.target.value))} className="w-full accent-blue-600 dark:accent-payae-accent" />
+                  <div className="flex justify-between text-sm text-gray-400 mb-2"><span>Amount</span><span className="text-white font-bold">₹{topUpAmount}</span></div>
+                  <input type="range" min="100" max="10000" step="100" value={topUpAmount} onChange={(e) => setTopUpAmount(Number(e.target.value))} className="w-full accent-payae-accent" />
                 </div>
-                <button onClick={() => topUpMutation.mutate()} disabled={topUpMutation.isPending} className="w-full bg-gradient-to-r from-blue-500 to-blue-700 dark:from-payae-accent dark:to-blue-500 text-white dark:text-black font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
+                <button onClick={() => topUpMutation.mutate()} disabled={topUpMutation.isPending} className="w-full bg-gradient-to-r from-payae-accent to-blue-500 text-black font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
                   {topUpMutation.isPending ? <Loader2 className="animate-spin mx-auto" /> : `Add ₹${topUpAmount}`}
                 </button>
               </motion.div>
@@ -122,13 +128,13 @@ export default function Dashboard() {
         </AnimatePresence>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5 relative z-10">
-          <motion.div className="bg-white dark:bg-gradient-to-br dark:from-payae-card dark:to-black border border-gray-200 dark:border-payae-orange/30 p-5 rounded-2xl shadow-lg dark:shadow-[0_0_30px_rgba(245,130,32,0.1)] relative overflow-hidden group flex flex-col justify-center">
+          <motion.div className="bg-gradient-to-br from-payae-card to-black border border-payae-orange/30 p-5 rounded-2xl shadow-[0_0_30px_rgba(245,130,32,0.1)] relative overflow-hidden group flex flex-col justify-center">
             <div className="flex justify-between items-center relative z-10">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-1 uppercase tracking-widest">Virtual Balance</p>
-                <h3 className="text-2xl font-black text-gray-900 dark:text-white"><AnimatedNumber value={data.bankBalance} /></h3>
+                <p className="text-xs text-gray-400 font-semibold mb-1 uppercase tracking-widest">Virtual Balance</p>
+                <h3 className="text-2xl font-black text-white"><AnimatedNumber value={data.bankBalance} /></h3>
               </div>
-              <button onClick={() => setShowTopUpModal(true)} className="w-9 h-9 bg-orange-100 dark:bg-payae-orange/20 text-orange-600 dark:text-payae-orange rounded-xl flex items-center justify-center hover:bg-orange-500 hover:text-white dark:hover:bg-payae-orange dark:hover:text-black transition-colors shrink-0"><Plus className="w-4 h-4" /></button>
+              <button onClick={() => setShowTopUpModal(true)} className="w-9 h-9 bg-payae-orange/20 text-payae-orange rounded-xl flex items-center justify-center hover:bg-payae-orange hover:text-black transition-colors shrink-0"><Plus className="w-4 h-4" /></button>
             </div>
           </motion.div>
           <StatCard title="Total Payments" value={data.totalPayments} prefix="₹" />
@@ -138,11 +144,11 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
           <div style={{ perspective: "1000px" }} className="h-[320px] lg:col-span-2">
-            <motion.div onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="bg-white dark:bg-gradient-to-br dark:from-black/60 dark:to-black/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-2xl shadow-xl dark:shadow-2xl h-full flex flex-col justify-between relative cursor-crosshair">
+            <motion.div onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="bg-gradient-to-br from-black/60 to-black/90 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-2xl h-full flex flex-col justify-between relative cursor-crosshair">
               <div style={{ transform: "translateZ(30px)" }} className="flex flex-col h-full">
                 <div>
-                  <h2 className="text-lg font-bold mb-1 text-gray-900 dark:text-white flex items-center gap-2"><Activity className="w-5 h-5 text-green-600 dark:text-payae-success" /> 7-Day Wealth Engine</h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs mb-4">Live automated investment routing.</p>
+                  <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2"><Activity className="w-5 h-5 text-payae-success" /> 7-Day Wealth Engine</h2>
+                  <p className="text-gray-400 text-xs mb-4">Live automated investment routing.</p>
                 </div>
                 <div className="flex items-end justify-between h-40 gap-3 mt-auto w-full px-2">
                   {weeklyData.map((day, idx) => {
@@ -150,11 +156,11 @@ export default function Dashboard() {
                     const isToday = idx === 6;
                     return (
                       <div key={idx} className="flex flex-col items-center w-full group relative">
-                        <div className="absolute opacity-0 group-hover:opacity-100 transition-all bg-gray-900 dark:bg-black border border-gray-700 dark:border-white/20 text-white text-xs font-black py-1.5 px-3 rounded-lg -top-12 z-30 pointer-events-none shadow-lg">₹{day.total.toFixed(2)}</div>
-                        <div className="w-full max-w-[20px] md:max-w-[28px] h-32 bg-gray-100 dark:bg-black/50 rounded-full border border-gray-200 dark:border-white/5 relative overflow-hidden mb-3 flex flex-col justify-end shadow-inner">
-                           <motion.div initial={{ height: 0 }} animate={{ height: `${heightPct}%` }} transition={{ duration: 1.5, delay: idx * 0.1, type: "spring" }} className={`w-full rounded-full ${isToday ? 'bg-gradient-to-t from-green-400 to-green-600 dark:from-payae-success/30 dark:to-payae-success shadow-lg' : 'bg-gradient-to-t from-blue-300 to-blue-500 dark:from-blue-500/20 dark:to-blue-400'}`} />
+                        <div className="absolute opacity-0 group-hover:opacity-100 transition-all bg-black border border-white/20 text-white text-xs font-black py-1.5 px-3 rounded-lg -top-12 z-30 pointer-events-none shadow-[0_0_15px_rgba(0,0,0,0.8)]">₹{day.total.toFixed(2)}</div>
+                        <div className="w-full max-w-[20px] md:max-w-[28px] h-32 bg-black/50 rounded-full border border-white/5 relative overflow-hidden mb-3 flex flex-col justify-end shadow-inner">
+                           <motion.div initial={{ height: 0 }} animate={{ height: `${heightPct}%` }} transition={{ duration: 1.5, delay: idx * 0.1, type: "spring" }} className={`w-full rounded-full ${isToday ? 'bg-gradient-to-t from-payae-success/30 to-payae-success shadow-[0_0_10px_rgba(0,255,148,0.5)]' : 'bg-gradient-to-t from-blue-500/20 to-blue-400'}`} />
                         </div>
-                        <span className={`text-[10px] uppercase font-bold tracking-widest ${isToday ? 'text-green-600 dark:text-payae-success' : 'text-gray-400'}`}>{day.label}</span>
+                        <span className={`text-[10px] uppercase font-bold tracking-widest ${isToday ? 'text-payae-success drop-shadow-md' : 'text-gray-400'}`}>{day.label}</span>
                       </div>
                     );
                   })}
@@ -163,17 +169,18 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
-          <div className="h-[320px] bg-white dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/5 p-6 rounded-2xl shadow-xl relative overflow-hidden flex flex-col justify-between group">
+          <div className="h-[320px] bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl relative overflow-hidden flex flex-col justify-between group">
+            <div className="absolute inset-0 bg-gradient-to-t from-payae-orange/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative z-10 flex justify-between items-start mb-4">
               <div>
-                 <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2"><Target className="text-orange-500 dark:text-payae-orange w-5 h-5"/> Dream Setup Goal</h2>
-                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">₹{totalWealth.toFixed(0)} / ₹{goalTarget}</p>
+                 <h2 className="text-lg font-bold text-white flex items-center gap-2"><Target className="text-payae-orange w-5 h-5"/> Dream Setup Goal</h2>
+                 <p className="text-xs text-gray-400 mt-1">₹{totalWealth.toFixed(0)} / ₹{goalTarget}</p>
               </div>
             </div>
             
             <div className="relative w-32 h-44 mx-auto mt-auto flex flex-col justify-end items-center">
-               <div className="w-16 h-3 bg-gray-300 dark:bg-gray-800 border-2 border-gray-400 dark:border-gray-700 rounded-t-md absolute -top-3 z-20" />
-               <div className="w-full h-full border-4 border-gray-200 dark:border-white/20 rounded-b-3xl rounded-t-lg relative overflow-hidden bg-gray-50 dark:bg-white/5 backdrop-blur-sm shadow-inner">
+               <div className="w-16 h-3 bg-gray-800 border-2 border-gray-700 rounded-t-md absolute -top-3 z-20" />
+               <div className="w-full h-full border-4 border-white/20 rounded-b-3xl rounded-t-lg relative overflow-hidden bg-white/5 backdrop-blur-sm shadow-[inset_0_0_20px_rgba(255,255,255,0.1)]">
                  
                  {coinsArray.map((coin, i) => {
                    const row = Math.floor(i / 3); 
@@ -185,9 +192,19 @@ export default function Dashboard() {
                        key={coin}
                        initial={{ y: -250, opacity: 0, rotate: Math.random() * 180 }}
                        animate={{ y: 0, opacity: 1, rotate: Math.random() * 20 - 10 }}
-                       transition={{ type: "spring", stiffness: 100, damping: 10, mass: 1, delay: i * 0.08 }}
-                       className="absolute w-8 h-3 bg-gradient-to-b from-yellow-300 to-yellow-500 dark:to-yellow-600 border border-yellow-600 dark:border-yellow-700 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
-                       style={{ bottom: `${row * 6 + 4}px`, left: `${col * 30 + offset + 8}px`, zIndex: i }}
+                       transition={{ 
+                         type: "spring", 
+                         stiffness: 100, 
+                         damping: 10, 
+                         mass: 1,
+                         delay: i * 0.08 
+                       }}
+                       className="absolute w-8 h-3 bg-gradient-to-b from-yellow-300 to-yellow-600 border border-yellow-700 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
+                       style={{ 
+                         bottom: `${row * 6 + 4}px`, 
+                         left: `${col * 30 + offset + 8}px`,
+                         zIndex: i
+                       }}
                      />
                    );
                  })}

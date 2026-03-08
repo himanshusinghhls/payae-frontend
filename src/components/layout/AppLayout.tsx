@@ -10,31 +10,22 @@ import { useLocation } from "react-router-dom";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
+  
   const isIdle = useIdle(300e3);
   const location = useLocation();
 
   useEffect(() => {
-    if (isIdle && !isLocked) setIsLocked(true);
+    if (isIdle && !isLocked) {
+      setIsLocked(true);
+    }
   }, [isIdle, isLocked]);
 
-  useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
-
   return (
-    <div className="flex min-h-screen overflow-hidden selection:bg-payae-accent selection:text-black">
+    <div className="flex bg-payae-bg min-h-screen text-white overflow-hidden selection:bg-payae-accent selection:text-black">
       <Toaster 
         position="top-center" 
         toastOptions={{ 
-          className: "bg-white text-gray-900 border border-gray-200 dark:bg-[#0A0F1C] dark:text-white dark:border-white/20 shadow-2xl rounded-2xl"
+          style: { background: '#0A0F1C', color: '#fff', borderRadius: '16px', border: '1px solid rgba(0,229,255,0.2)', boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)' } 
         }} 
       />
 
@@ -56,7 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             />
             <motion.div 
               initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="fixed top-0 left-0 h-full z-50 md:hidden shadow-2xl bg-white dark:bg-payae-bg"
+              className="fixed top-0 left-0 h-full z-50 md:hidden shadow-2xl"
               onClick={() => setIsMobileMenuOpen(false)} 
             >
               <Sidebar />
@@ -65,11 +56,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 flex flex-col relative h-screen z-10 transition-colors duration-500 bg-slate-50 dark:bg-transparent">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-payae-accent/20 dark:bg-payae-accent/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-payae-success/20 dark:bg-payae-success/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="flex-1 flex flex-col relative h-screen z-10">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-payae-accent/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-payae-success/10 rounded-full blur-[120px] pointer-events-none" />
         
-        <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} theme={theme} toggleTheme={toggleTheme} />
+        <Topbar onMenuClick={() => setIsMobileMenuOpen(true)} />
         
         <motion.div 
           key={location.pathname}

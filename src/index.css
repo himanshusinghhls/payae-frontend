@@ -4,10 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-payae-lightBg text-gray-900 transition-colors duration-500 antialiased selection:bg-payae-accent selection:text-black;
-  }
-  .dark body {
-    @apply bg-payae-bg text-white;
+    @apply bg-payae-bg text-white antialiased selection:bg-payae-accent selection:text-black;
   }
 }
 
@@ -18,5 +15,6 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-white/10 rounded-full;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
 }
