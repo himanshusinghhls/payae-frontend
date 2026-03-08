@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import AppLayout from "../components/layout/AppLayout";
 import StatCard from "../components/ui/StatCard";
 import AnimatedNumber from "../components/ui/AnimatedNumber";
@@ -12,22 +12,15 @@ import Confetti from "react-confetti";
 import OnboardingTour from "../components/ui/OnboardingTour";
 
 const fetchDashboard = async () => {
-  const res = await api.get("/api/dashboard");
-  return res.data.data || res.data;
+  const res = await api.get("/api/dashboard"); 
+  return res.data.data || res.data; 
 };
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: dashData, isLoading: isDashLoading } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard, refetchInterval: 10000 });
-  const { data: rawTransactions, isLoading: isLedgerLoading } = useQuery({
-    queryKey: ['ledger'],
-    queryFn: async () => {
-      const res = await api.get("/api/transactions");
-      return Array.isArray(res.data) ? res.data : res.data?.data || [];
-    }
-  });
-
+  const { data: rawTransactions, isLoading: isLedgerLoading } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number>(1000);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -66,9 +59,8 @@ export default function Dashboard() {
 
   const weeklyData = useMemo(() => {
     if (!rawTransactions) return [];
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
+    const days = Array.from({length: 7}, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (6 - i));
       return { dateString: d.toISOString().split('T')[0], label: d.toLocaleDateString('en-US', { weekday: 'short' }), total: 0 };
     });
     rawTransactions.forEach((tx: any) => {
@@ -81,19 +73,26 @@ export default function Dashboard() {
   }, [rawTransactions]);
 
   const maxDailyValue = Math.max(...weeklyData.map(d => d.total), 50);
+  const mouseX = useMotionValue(0); 
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 50, damping: 30 }); 
+  const springY = useSpring(mouseY, { stiffness: 50, damping: 30 });
+  const rotateY = useTransform(springX, [-0.5, 0, 0.5], ["-4deg", "0deg", "4deg"]); 
+  const rotateX = useTransform(springY, [-0.5, 0, 0.5], ["4deg", "0deg", "-4deg"]);
 
-  if (isDashLoading || isLedgerLoading) return (
-    <AppLayout>
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-10 h-10 animate-spin text-payae-accent" />
-      </div>
-    </AppLayout>
-  );
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5); 
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+  const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
+
+  if (isDashLoading || isLedgerLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
 
   const bankBalance = Number(dashData?.bankBalance || 0);
   const totalPayments = Number(dashData?.totalInvested || dashData?.totalPayments || 0);
   const totalWealth = calcSavings + calcMf + calcGold;
-
+  
   if (totalWealth >= 1000 && !localStorage.getItem("milestone1k")) {
     setShowConfetti(true);
     localStorage.setItem("milestone1k", "true");
@@ -115,7 +114,7 @@ export default function Dashboard() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowTopUpModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-payae-card border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md z-10">
-                <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20} /></button>
+                <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
                 <h3 className="text-xl font-bold text-white mb-2">Top Up Wallet</h3>
                 <div className="mb-6 mt-4">
                   <div className="flex justify-between text-sm text-gray-400 mb-2"><span>Amount</span><span className="text-white font-bold">₹{topUpAmount}</span></div>
@@ -146,8 +145,8 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
           <div style={{ perspective: "1000px" }} className="h-[320px] lg:col-span-2">
-            <motion.div className="bg-gradient-to-br from-black/60 to-black/90 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-2xl h-full flex flex-col justify-between relative cursor-crosshair">
-              <div className="flex flex-col h-full">
+            <motion.div onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="bg-gradient-to-br from-black/60 to-black/90 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-2xl h-full flex flex-col justify-between relative cursor-crosshair">
+              <div style={{ transform: "translateZ(30px)" }} className="flex flex-col h-full">
                 <div>
                   <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2"><Activity className="w-5 h-5 text-payae-success" /> 7-Day Wealth Engine</h2>
                   <p className="text-gray-400 text-xs mb-4">Live automated investment routing.</p>
@@ -182,26 +181,35 @@ export default function Dashboard() {
             <div className="relative w-32 h-48 mx-auto mt-auto flex flex-col justify-end items-center z-10">
                <div className="w-16 h-3 bg-gray-800 border-2 border-gray-700 rounded-t-md absolute -top-3 z-30" />
                <div className="w-full h-full border-4 border-white/20 rounded-b-3xl rounded-t-lg relative overflow-hidden bg-white/5 backdrop-blur-sm shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
-
+                 
                  {coinsArray.map((coin, i) => {
-                   const cols = 6;
-                   const row = Math.floor(i / cols);
+                   const cols = 6; 
+                   const row = Math.floor(i / cols); 
                    const col = i % cols;
-                   const x = col * 16 + (row % 2 === 0 ? 0 : 8);
-                   const yBase = 6;
-                   const y = row * 5 + yBase;
+                   const randomXJitter = Math.random() * 4 - 2; 
+                   const randomYJitter = Math.random() * 3 - 1.5;
+                   const xOffset = col * 16 + (row % 2 === 0 ? 0 : 8) + randomXJitter;
+                   const yOffset = row * 4 + 2 + randomYJitter;
 
                    return (
-                     <motion.div
+                     <motion.div 
                        key={coin}
-                       initial={{ y: -Math.random() * 100 - 50, scale: 0.7 }}
-                       animate={{ y: y, scale: 1 }}
-                       transition={{ type: "spring", damping: 8, stiffness: 120, delay: i * 0.03 }}
-                       className="absolute w-6 h-6 bg-gradient-to-b from-yellow-400 to-yellow-600 border border-yellow-700 rounded-full shadow-lg flex items-center justify-center"
-                       style={{ left: x }}
-                     >
-                       <div className="w-5 h-5 rounded-full bg-yellow-500 border border-yellow-700" />
-                     </motion.div>
+                       initial={{ y: -400, opacity: 0, rotate: Math.random() * 360 }}
+                       animate={{ y: 0, opacity: 1, rotate: Math.random() * 20 - 10 }}
+                       transition={{ 
+                         type: "spring", 
+                         stiffness: 120,
+                         damping: 8,
+                         mass: 1.5,
+                         delay: Math.min(i * 0.02, 2.5) 
+                       }}
+                       className="absolute w-8 h-2.5 bg-gradient-to-b from-yellow-300 to-yellow-600 border border-yellow-700 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20"
+                       style={{ 
+                         bottom: `${yOffset}px`, 
+                         left: `${xOffset}px`,
+                         zIndex: i 
+                       }}
+                     />
                    );
                  })}
 
