@@ -9,10 +9,11 @@ type PortfolioData = { savingsBalance: number; mutualFundUnits: number; goldGram
 const fetchPortfolio = async (): Promise<PortfolioData> => {
   const response = await api.get("/api/dashboard");
   const data = response.data?.data || response.data;
+  
   return {
-    savingsBalance: data.savingsBalance || data.savings || 0,
-    mutualFundUnits: data.mutualFundUnits || data.mutualFunds || data.mfUnits || data.mf || 0,
-    goldGrams: data.goldGrams || data.gold || 0,
+    savingsBalance: Number(data.savingsBalance || data.savings || 0),
+    mutualFundUnits: Number(data.mutualFundUnits || data.mf || 0),
+    goldGrams: Number(data.goldGrams || data.gold || 0),
   };
 };
 
@@ -22,9 +23,9 @@ export default function Portfolio() {
   if (isLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
   if (isError || !data) return <AppLayout><p className="text-red-400 text-center mt-10">Failed to load Portfolio data.</p></AppLayout>;
 
-  const safeSavings = Number(data.savingsBalance) || 0;
-  const safeMf = Number(data.mutualFundUnits) || 0;
-  const safeGoldGrams = Number(data.goldGrams) || 0;
+  const safeSavings = data.savingsBalance;
+  const safeMf = data.mutualFundUnits;
+  const safeGoldGrams = data.goldGrams;
 
   const goldValueInRupees = safeGoldGrams * 7500;
   const totalWealth = safeSavings + safeMf + goldValueInRupees;

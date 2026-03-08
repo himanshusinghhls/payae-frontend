@@ -2,7 +2,7 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Github, Linkedin, Mail, Code2, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const DeveloperCard = ({ name, role, email, github, linkedin, leetcode, delay }: any) => {
+const DeveloperCard = ({ name, role, description, email, github, linkedin, leetcode, delay }: any) => {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const springX = useSpring(mouseX, { stiffness: 150, damping: 20 });
@@ -14,7 +14,7 @@ const DeveloperCard = ({ name, role, email, github, linkedin, leetcode, delay }:
   return (
     <motion.div 
       initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay }}
-      className="relative w-full max-w-sm h-[480px] perspective-[1500px]"
+      className="relative w-full max-w-sm h-[520px] perspective-[1500px]"
       onMouseMove={(e: any) => {
         const rect = e.currentTarget.getBoundingClientRect();
         mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
@@ -34,16 +34,15 @@ const DeveloperCard = ({ name, role, email, github, linkedin, leetcode, delay }:
 
         <h2 style={{ transform: "translateZ(40px)" }} className="text-2xl font-black text-white mb-1">{name}</h2>
         <p style={{ transform: "translateZ(30px)" }} className="text-sm font-bold text-payae-accent uppercase tracking-widest mb-6">{role}</p>
-
-        <p style={{ transform: "translateZ(20px)" }} className="text-gray-400 text-sm mb-auto">
-          Description.
+        <p style={{ transform: "translateZ(20px)" }} className="text-gray-400 text-sm mb-auto leading-relaxed">
+          {description}
         </p>
 
         <div style={{ transform: "translateZ(50px)" }} className="flex items-center gap-4 mt-6">
-          <a href={github} target="_blank" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/20 hover:text-white transition-colors text-gray-400"><Github className="w-5 h-5"/></a>
-          <a href={linkedin} target="_blank" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-[#0A66C2] hover:text-white transition-colors text-gray-400"><Linkedin className="w-5 h-5"/></a>
-          <a href={leetcode} target="_blank" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-[#FFA116] hover:text-white transition-colors text-gray-400"><Code2 className="w-5 h-5"/></a>
-          <a href={`mailto:${email}`} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-payae-accent hover:text-black transition-colors text-gray-400"><Mail className="w-5 h-5"/></a>
+          <a href={github} target="_blank" rel="noreferrer" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/20 hover:text-white transition-colors text-gray-400"><Github className="w-5 h-5"/></a>
+          <a href={linkedin} target="_blank" rel="noreferrer" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-[#0A66C2] hover:text-white transition-colors text-gray-400"><Linkedin className="w-5 h-5"/></a>
+          <a href={leetcode} target="_blank" rel="noreferrer" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-[#FFA116] hover:text-white transition-colors text-gray-400"><Code2 className="w-5 h-5"/></a>
+          <a href={`mailto:${email}`} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-[#FF8A65] hover:text-white transition-colors text-gray-400"><Mail className="w-5 h-5"/></a>
         </div>
       </motion.div>
     </motion.div>
@@ -75,22 +74,24 @@ export default function Contact() {
 
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 lg:gap-16 w-full">
           <DeveloperCard 
+            name="Himanshu Singh" 
+            role="Co-Founder & Core Engineer" 
+            description="Full-stack engineer with a strong command of algorithmic problem-solving. Passionate about architecting scalable backend systems and delivering seamless frontend experiences."
+            email="himanshusinghhls@gmail.com"
+            github="https://github.com/himanshusinghhls" 
+            linkedin="https://www.linkedin.com/in/himanshusinghhls/" 
+            leetcode="https://leetcode.com/u/himanshusinghhls/"
+            delay={0.3}
+          />
+          <DeveloperCard 
             name="Anjali Rani" 
-            role="Co-Founder" 
+            role="Co-Founder & Core Engineer" 
+            description="Full-stack engineer driven by complex problem-solving. Dedicated to engineering robust database infrastructures and highly interactive, performant user interfaces."
             email="anjalirani4343@gmail.com"
             github="https://github.com/anjalir111" 
             linkedin="https://www.linkedin.com/in/anjali-rani-237604323/" 
             leetcode="https://leetcode.com/u/anjali_rani_111111/"
             delay={0.1}
-          />
-          <DeveloperCard 
-            name="Himanshu Singh" 
-            role="Co-Founder" 
-            email="himanshusinghhls@egmail.com"
-            github="https://github.com/himanshusinghhls" 
-            linkedin="https://www.linkedin.com/in/himanshusinghhls/" 
-            leetcode="https://leetcode.com/u/himanshusinghhls/"
-            delay={0.3}
           />
         </div>
       </div>

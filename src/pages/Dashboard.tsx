@@ -15,11 +15,11 @@ const fetchDashboard = async (): Promise<DashboardData> => {
   const res = await api.get("/api/dashboard"); 
   const data = res.data.data || res.data; 
   return {
-    bankBalance: data.bankBalance || 0,
-    totalPayments: data.totalInvested || 0,
-    totalSavings: data.savingsBalance || data.savings || 0,
-    mfUnits: data.mutualFundUnits || data.mf || 0,
-    goldGrams: data.goldGrams || data.gold || 0,
+    bankBalance: Number(data.bankBalance || 0),
+    totalPayments: Number(data.totalInvested || 0),
+    totalSavings: Number(data.savingsBalance || data.savings || 0),
+    mfUnits: Number(data.mutualFundUnits || data.mf || 0),
+    goldGrams: Number(data.goldGrams || data.gold || 0),
   };
 };
 
@@ -87,9 +87,6 @@ export default function Dashboard() {
 
   const goldValue = data.goldGrams * 7500;
   const totalWealth = data.totalSavings + data.mfUnits + goldValue;
-  const savPct = totalWealth > 0 ? (data.totalSavings / totalWealth) * 100 : 0;
-  const mfPct = totalWealth > 0 ? (data.mfUnits / totalWealth) * 100 : 0;
-  const goldPct = totalWealth > 0 ? (goldValue / totalWealth) * 100 : 0;
 
   return (
     <AppLayout>
@@ -217,21 +214,21 @@ export default function Dashboard() {
                 <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} className="absolute bottom-2 left-4 md:left-8 bg-[#00E5FF]/10 border border-[#00E5FF]/30 p-2.5 rounded-xl shadow-[0_0_20px_rgba(0,229,255,0.2)] backdrop-blur-md flex items-center gap-2">
                   <div className="bg-[#00E5FF] p-1.5 rounded-lg text-black"><Wallet className="w-3.5 h-3.5" /></div>
                   <div>
-                    <p className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">{savPct.toFixed(0)}%</p>
+                    <p className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">Savings</p>
                     <p className="text-xs font-black text-white">₹{data.totalSavings.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
                   </div>
                 </motion.div>
                 <motion.div animate={{ y: [0, 5, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeInOut" }} className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#00FF94]/10 border border-[#00FF94]/30 p-2.5 rounded-xl shadow-[0_0_20px_rgba(0,255,148,0.2)] backdrop-blur-md flex items-center gap-2">
                   <div className="bg-[#00FF94] p-1.5 rounded-lg text-black"><TrendingUp className="w-3.5 h-3.5" /></div>
                   <div>
-                    <p className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">{mfPct.toFixed(0)}%</p>
+                    <p className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">Mutual Funds</p>
                     <p className="text-xs font-black text-white">₹{data.mfUnits.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
                   </div>
                 </motion.div>
                 <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 3, delay: 2, repeat: Infinity, ease: "easeInOut" }} className="absolute bottom-2 right-4 md:right-8 bg-[#f58220]/10 border border-[#f58220]/30 p-2.5 rounded-xl shadow-[0_0_20px_rgba(245,130,32,0.2)] backdrop-blur-md flex items-center gap-2">
                   <div className="bg-[#f58220] p-1.5 rounded-lg text-black"><Coins className="w-3.5 h-3.5" /></div>
                   <div>
-                    <p className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">{goldPct.toFixed(0)}%</p>
+                    <p className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">Gold</p>
                     <p className="text-xs font-black text-white">₹{goldValue.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
                   </div>
                 </motion.div>

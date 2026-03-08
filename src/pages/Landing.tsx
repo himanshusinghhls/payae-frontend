@@ -1,54 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, Transition, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Zap, TrendingUp, Sparkles, Building2, Calculator, ArrowUpRight, Lock } from "lucide-react";
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [monthlySpend, setMonthlySpend] = useState(15000);
   const monthlyInvested = monthlySpend * 0.08;
   const yearlyProjection = (monthlyInvested * 12) * 1.10;
-
-  useEffect(() => { 
-    const timer = setTimeout(() => setLoading(false), 1500); 
-    return () => clearTimeout(timer); 
-  }, []);
-
   const floatMainTransition: Transition = { duration: 4, repeat: Infinity, ease: "easeInOut" };
   const floatFastTransition: Transition = { duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 };
   const floatSlowTransition: Transition = { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 };
-
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-
   const springX = useSpring(mouseX, { stiffness: 150, damping: 20 });
   const springY = useSpring(mouseY, { stiffness: 150, damping: 20 });
-
   const rotateY = useTransform(springX, [-0.5, 0, 0.5], ["-25deg", "-15deg", "-5deg"]);
   const rotateX = useTransform(springY, [-0.5, 0, 0.5], ["20deg", "10deg", "0deg"]);
-
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
     mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
   };
-
   const handleMouseLeave = () => {
     mouseX.set(0);
     mouseY.set(0);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0A0F1C] flex flex-col items-center justify-center">
-         <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>
-            <div className="w-16 h-16 border-4 border-payae-accent border-t-transparent rounded-full animate-spin" />
-         </motion.div>
-         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-6 text-payae-accent font-bold tracking-widest uppercase text-sm">Initializing PayAE</motion.p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#0A0F1C] text-white overflow-hidden relative selection:bg-payae-accent selection:text-black">
@@ -103,7 +80,6 @@ export default function Landing() {
           
           <motion.div animate={{ scale: [1, 1.5], opacity: [0.5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeOut" }} className="absolute w-80 h-80 border border-payae-accent/20 rounded-full z-0 pointer-events-none" />
           <motion.div animate={{ scale: [1, 1.8], opacity: [0.3, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeOut" }} className="absolute w-80 h-80 border border-payae-success/20 rounded-full z-0 pointer-events-none" />
-
           <motion.div animate={{ y: [0, -20, 0] }} transition={floatMainTransition} className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
             <motion.div 
               style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
@@ -130,7 +106,6 @@ export default function Landing() {
               </div>
             </motion.div>
           </motion.div>
-
           <motion.div animate={{ y: [0, -15, 0] }} transition={floatFastTransition} className="absolute top-[20%] left-[10%] xl:left-[18%] z-30">
             <motion.div whileHover={{ scale: 1.1, boxShadow: "0 0 30px rgba(0,255,148,0.5)" }} className="bg-black/80 border border-payae-green/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl flex items-center gap-4 cursor-pointer">
                <div className="bg-payae-green/20 p-3 rounded-2xl"><Lock className="text-payae-green w-5 h-5" /></div>
@@ -140,7 +115,6 @@ export default function Landing() {
                </div>
             </motion.div>
           </motion.div>
-
           <motion.div animate={{ y: [0, 25, 0] }} transition={floatSlowTransition} className="absolute bottom-[20%] right-[10%] xl:right-[15%] z-30">
              <motion.div whileHover={{ scale: 1.1, boxShadow: "0 0 30px rgba(245,130,32,0.5)" }} className="bg-black/80 border border-payae-accent/30 backdrop-blur-xl p-4 rounded-3xl shadow-2xl flex items-center gap-4 cursor-pointer">
                <div className="bg-payae-accent/20 p-3 rounded-2xl"><TrendingUp className="text-payae-accent w-5 h-5" /></div>
@@ -150,7 +124,6 @@ export default function Landing() {
                </div>
              </motion.div>
           </motion.div>
-
         </motion.div>
       </div>
 
