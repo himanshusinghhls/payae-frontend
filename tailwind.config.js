@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}"
@@ -9,6 +10,7 @@ export default {
       colors: {
         payae: {
           bg: "#0A0F1C", 
+          lightBg: "#f8fafc",
           brand: "#1c3166", 
           orange: "#f58220", 
           green: "#00a651",  
