@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { useGoogleLogin } from '@react-oauth/google';
 
 export default function Login() {
@@ -30,7 +30,10 @@ export default function Login() {
       toast.success("Welcome back!!");
       navigate("/dashboard");
     },
-    onError: () => toast.error("Invalid email or password.")
+    onError: (error: any) => {
+      const message = error.response?.data?.message || error.response?.data?.error || "Invalid email or password.";
+      toast.error(message);
+    }
   });
 
   const sendOtpMutation = useMutation({
@@ -39,7 +42,10 @@ export default function Login() {
       toast.success("OTP sent to your email!");
       setShowOtpModal(true);
     },
-    onError: () => toast.error("Failed. Email might already be in use.")
+    onError: (error: any) => {
+      const message = error.response?.data?.message || "Failed. Email might already be in use.";
+      toast.error(message);
+    }
   });
 
   const registerMutation = useMutation({
@@ -49,7 +55,10 @@ export default function Login() {
       setShowOtpModal(false);
       navigate("/login");
     },
-    onError: () => toast.error("Invalid OTP.")
+    onError: (error: any) => {
+      const message = error.response?.data?.message || "Invalid OTP.";
+      toast.error(message);
+    }
   });
 
   const googleAuthMutation = useMutation({
@@ -77,7 +86,13 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#0A0F1C] text-white flex flex-col justify-center items-center p-4 relative overflow-hidden selection:bg-payae-accent selection:text-black">
-      
+      <Toaster 
+        position="top-center" 
+        toastOptions={{ 
+          style: { background: '#0A0F1C', color: '#fff', borderRadius: '16px', border: '1px solid rgba(0,229,255,0.2)', boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)' } 
+        }} 
+      />
+
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-payae-accent/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
 
