@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import AppLayout from "../components/layout/AppLayout";
 import StatCard from "../components/ui/StatCard";
 import AnimatedNumber from "../components/ui/AnimatedNumber";
-import { Plus, Loader2, X, Wallet, TrendingUp, Coins, BarChart3 } from "lucide-react";
+import { Plus, Loader2, X, Wallet, TrendingUp, Coins, Activity } from "lucide-react";
 import toast from "react-hot-toast";
 
 type DashboardData = { bankBalance: number; totalPayments: number; totalSavings: number; mfUnits: number; goldGrams: number; };
@@ -43,7 +43,6 @@ export default function Dashboard() {
 
   const weeklyData = useMemo(() => {
     if (!rawTransactions) return [];
-    
     const days = Array.from({length: 7}, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
@@ -66,6 +65,20 @@ export default function Dashboard() {
   }, [rawTransactions]);
 
   const maxDailyValue = Math.max(...weeklyData.map(d => d.total), 50);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 150, damping: 20 });
+  const springY = useSpring(mouseY, { stiffness: 150, damping: 20 });
+  const rotateY = useTransform(springX, [-0.5, 0, 0.5], ["-8deg", "0deg", "8deg"]);
+  const rotateX = useTransform(springY, [-0.5, 0, 0.5], ["8deg", "0deg", "-8deg"]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+  const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
   if (isLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
   if (isError || !data) return <AppLayout><p className="text-red-400 p-8">Failed to load data.</p></AppLayout>;
@@ -122,38 +135,53 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
           
-          <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl h-[320px] flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-[-50%] left-[-20%] w-64 h-64 bg-payae-success/10 rounded-full blur-[80px] pointer-events-none" />
-            <div>
-              <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-payae-success" /> 7-Day Velocity
-              </h2>
-              <p className="text-gray-400 text-xs mb-6">Your recent automated wealth generation.</p>
-            </div>
+          <div style={{ perspective: "1000px" }} className="h-[320px]">
+            <motion.div 
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+              className="bg-gradient-to-br from-black/60 to-black/90 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-2xl h-full flex flex-col justify-between relative cursor-crosshair overflow-hidden"
+            >
+              <div className="absolute top-[-50%] left-[-20%] w-64 h-64 bg-payae-success/10 rounded-full blur-[80px] pointer-events-none" />
+              
+              <div style={{ transform: "translateZ(30px)" }} className="flex flex-col h-full relative z-10">
+                <div>
+                  <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-payae-success" /> 7-Day Wealth Engine
+                  </h2>
+                  <p className="text-gray-400 text-xs mb-4">Live automated investment routing.</p>
+                </div>
 
-            <div className="flex items-end justify-between h-40 gap-2 mt-auto relative z-10">
-              {weeklyData.map((day, idx) => {
-                const heightPct = (day.total / maxDailyValue) * 100;
-                const isToday = idx === 6;
-                return (
-                  <div key={idx} className="flex flex-col items-center w-full group">
-                    <div className="w-full relative flex justify-center items-end h-full mb-2">
-                      <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-white text-[10px] font-bold py-1 px-2 rounded -top-8 whitespace-nowrap z-20">
-                        ₹{day.total.toFixed(2)}
+                <div className="flex items-end justify-between h-40 gap-3 mt-auto w-full px-2">
+                  {weeklyData.map((day, idx) => {
+                    const heightPct = Math.max((day.total / maxDailyValue) * 100, 8);
+                    const isToday = idx === 6;
+                    
+                    return (
+                      <div key={idx} className="flex flex-col items-center w-full group relative">
+                        
+                        <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/90 border border-white/10 text-white text-xs font-black py-1.5 px-2.5 rounded-lg -top-10 shadow-xl z-30 translate-y-2 group-hover:translate-y-0 pointer-events-none">
+                          ₹{day.total.toFixed(2)}
+                        </div>
+
+                        <div className="w-full max-w-[20px] md:max-w-[28px] h-32 bg-black/50 rounded-full border border-white/5 relative overflow-hidden shadow-[inset_0_0_10px_rgba(0,0,0,0.8)] mb-3 flex flex-col justify-end">
+                           <motion.div
+                             initial={{ height: 0, opacity: 0 }}
+                             animate={{ height: `${heightPct}%`, opacity: 1 }}
+                             transition={{ duration: 1.5, delay: idx * 0.1, type: "spring", bounce: 0.4 }}
+                             className={`w-full rounded-full relative ${isToday ? 'bg-gradient-to-t from-payae-success/30 to-payae-success shadow-[0_0_20px_rgba(0,255,148,0.8)]' : 'bg-gradient-to-t from-blue-500/20 to-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.6)]'}`}
+                           >
+                             <div className="absolute top-0.5 left-1/2 -translate-x-1/2 w-[80%] aspect-square bg-white rounded-full mix-blend-overlay shadow-[0_0_10px_white]" />
+                           </motion.div>
+                        </div>
+                        <span className={`text-[10px] uppercase font-bold tracking-widest transition-colors ${isToday ? 'text-payae-success shadow-payae-success' : 'text-gray-500 group-hover:text-gray-300'}`}>{day.label}</span>
                       </div>
-                      <motion.div 
-                        initial={{ height: 0 }} 
-                        animate={{ height: `${Math.max(heightPct, 2)}%` }} 
-                        transition={{ duration: 1, delay: idx * 0.1 }}
-                        className={`w-full max-w-[2.5rem] rounded-t-md transition-colors ${isToday ? 'bg-gradient-to-t from-payae-success/50 to-payae-success shadow-[0_0_15px_rgba(0,255,148,0.3)]' : 'bg-white/10 hover:bg-white/20'}`} 
-                      />
-                    </div>
-                    <span className={`text-[10px] uppercase font-bold tracking-wider ${isToday ? 'text-payae-success' : 'text-gray-500'}`}>{day.label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          </div>
           
           <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-5 rounded-2xl shadow-xl h-[320px] flex flex-col justify-between">
             <div>

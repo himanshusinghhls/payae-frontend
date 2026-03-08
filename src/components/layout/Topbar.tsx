@@ -8,8 +8,15 @@ import api from "../../api/client";
 import toast from "react-hot-toast";
 import { Settings as SettingsIcon } from "lucide-react";
 
-const fetchProfile = async () => { const res = await api.get("/api/users/me"); return res.data; };
-const fetchTransactions = async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; };
+const fetchProfile = async () => {
+  const response = await api.get("/api/users/me");
+  return response.data;
+};
+
+const fetchTransactions = async () => {
+  const res = await api.get("/api/transactions");
+  return Array.isArray(res.data) ? res.data : res.data?.data || [];
+};
 
 export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { logout } = useAuth();
@@ -77,7 +84,9 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
     <>
       <div className="h-20 backdrop-blur-md bg-payae-bg/80 border-b border-payae-border flex items-center justify-between px-4 md:px-8 sticky top-0 z-30">
         <div className="flex items-center gap-4">
-          <button onClick={onMenuClick} className="md:hidden text-gray-400 hover:text-white transition-colors"><Menu className="w-6 h-6" /></button>
+          <button onClick={onMenuClick} className="md:hidden text-gray-400 hover:text-white transition-colors">
+            <Menu className="w-6 h-6" />
+          </button>
           <div>
             <h2 className="text-lg md:text-xl font-bold text-white truncate max-w-[200px] md:max-w-none">{pageInfo.title}</h2>
             <p className="text-xs md:text-sm text-gray-400 hidden md:block">{pageInfo.sub}</p>
@@ -132,11 +141,9 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                     <p className="text-white font-bold text-sm truncate">{formattedName}</p>
                     <p className="text-gray-400 text-xs truncate">{displayEmail}</p>
                   </div>
-                  
                   <button onClick={openEditModal} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                     <UserIcon className="w-4 h-4" /> Edit Profile
                   </button>
-
                   <button onClick={() => { setShowProfileMenu(false); navigate('/settings'); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                     <SettingsIcon className="w-4 h-4" /> Allocation Rules
                   </button>
