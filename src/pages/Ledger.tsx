@@ -21,7 +21,6 @@ export default function Ledger() {
 
   const [expandedBaseId, setExpandedBaseId] = useState<number | null>(null);
   const [expandedWalletId, setExpandedWalletId] = useState<number | null>(null);
-  
   const [visibleCount, setVisibleCount] = useState(10);
 
   const smartLedger = useMemo(() => {
@@ -48,22 +47,41 @@ export default function Ledger() {
   const downloadPDF = () => {
     try {
       const doc = new jsPDF();
-      doc.setFontSize(20);
-      doc.setTextColor("#00E5FF");
-      doc.text("PayAE Official Statement", 14, 22);
+    
+      doc.setFontSize(22);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(245, 130, 32);
+      doc.text("Pay", 14, 22);
+      doc.setTextColor(0, 166, 81);
+      doc.text("A", 26, 22);
+      doc.text("E", 34, 22);
+      doc.setTextColor(100, 100, 100);
+      doc.text(" Statement", 41, 22);
       
       doc.setFontSize(10);
-      doc.setTextColor(100);
+      doc.setFont("helvetica", "normal");
       doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
 
-      const tableData = smartLedger.map((t: any) => [
-        new Date(t.timestamp).toLocaleDateString(),
-        t.isFailed ? "Failed" : t.isReceived ? "Received" : "Sent",
-        t.description || t.payeeName || "UPI Payment",
-        `Rs. ${t.amount.toFixed(2)}`,
-        t.totalRoundupAmount > 0 ? `+ Rs. ${t.totalRoundupAmount.toFixed(2)}` : "-",
-        `Rs. ${t.totalCharge.toFixed(2)}`
-      ]);
+      let totalSpent = 0;
+      let totalReceived = 0;
+
+      const tableData = smartLedger.map((t: any) => {
+        if (t.isReceived) totalReceived += t.amount;
+        else if (!t.isFailed) totalSpent += t.totalCharge;
+
+        return [
+          new Date(t.timestamp).toLocaleDateString(),
+          t.isFailed ? "Failed" : t.isReceived ? "Received" : "Sent",
+          t.description || t.payeeName || "UPI Payment",
+          `Rs. ${t.amount.toFixed(2)}`,
+          t.totalRoundupAmount > 0 ? `+ Rs. ${t.totalRoundupAmount.toFixed(2)}` : "-",
+          `Rs. ${t.totalCharge.toFixed(2)}`
+        ];
+      });
+
+      tableData.push(["", "", "", "", "", ""]);
+      tableData.push(["", "", "", "", "Total Spent:", `Rs. ${totalSpent.toFixed(2)}`]);
+      tableData.push(["", "", "", "", "Total Received:", `Rs. ${totalReceived.toFixed(2)}`]);
 
       autoTable(doc, {
         startY: 40,

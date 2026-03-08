@@ -102,15 +102,15 @@ export default function Portfolio() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-gradient-to-br from-[#00E5FF]/10 to-black/40 border border-[#00E5FF]/30 p-5 rounded-2xl flex flex-col justify-between shadow-lg">
-            <div className="flex items-center justify-between mb-6"><div className="bg-[#00E5FF]/20 p-2.5 rounded-lg"><Wallet className="text-[#00E5FF] w-5 h-5" /></div><span className="text-[#00E5FF] font-bold text-lg">{savPct.toFixed(1)}%</span></div>
+            <div className="flex items-center justify-between mb-6"><div className="bg-[#00E5FF]/20 p-2.5 rounded-lg"><Wallet className="text-[#00E5FF] w-5 h-5" /></div><span className="text-[#00E5FF] font-bold text-[10px] uppercase tracking-widest">Invested</span></div>
             <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Liquid Savings</h3><p className="text-3xl font-black text-white">₹{safeSavings.toFixed(2)}</p></div>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-gradient-to-br from-[#00FF94]/10 to-black/40 border border-[#00FF94]/30 p-5 rounded-2xl flex flex-col justify-between shadow-lg">
-            <div className="flex items-center justify-between mb-6"><div className="bg-[#00FF94]/20 p-2.5 rounded-lg"><TrendingUp className="text-[#00FF94] w-5 h-5" /></div><span className="text-[#00FF94] font-bold text-lg">{mfPct.toFixed(1)}%</span></div>
+            <div className="flex items-center justify-between mb-6"><div className="bg-[#00FF94]/20 p-2.5 rounded-lg"><TrendingUp className="text-[#00FF94] w-5 h-5" /></div><span className="text-[#00FF94] font-bold text-[10px] uppercase tracking-widest">Invested</span></div>
             <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Mutual Funds</h3><p className="text-3xl font-black text-white">₹{safeMf.toFixed(2)}</p></div>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-gradient-to-br from-[#f58220]/10 to-black/40 border border-[#f58220]/30 p-5 rounded-2xl flex flex-col justify-between shadow-lg">
-            <div className="flex items-center justify-between mb-6"><div className="bg-[#f58220]/20 p-2.5 rounded-lg"><Coins className="text-[#f58220] w-5 h-5" /></div><span className="text-[#f58220] font-bold text-lg">{goldPct.toFixed(1)}%</span></div>
+            <div className="flex items-center justify-between mb-6"><div className="bg-[#f58220]/20 p-2.5 rounded-lg"><Coins className="text-[#f58220] w-5 h-5" /></div><span className="text-[#f58220] font-bold text-[10px] uppercase tracking-widest">Invested</span></div>
             <div className="flex justify-between items-end">
               <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Digital Gold</h3><p className="text-3xl font-black text-white">₹{goldValueInRupees.toFixed(2)}</p></div>
               <div className="text-right"><span className="text-gray-500 text-[10px] block mb-0.5 uppercase tracking-wider">Holdings</span><span className="text-white font-bold text-sm">{safeGoldGrams.toFixed(4)}g</span></div>

@@ -70,13 +70,17 @@ export default function Dashboard() {
 
   const maxDailyValue = Math.max(...weeklyData.map(d => d.total), 50);
 
-  const mouseX = useMotionValue(0); const mouseY = useMotionValue(0);
-  const springX = useSpring(mouseX, { stiffness: 150, damping: 20 }); const springY = useSpring(mouseY, { stiffness: 150, damping: 20 });
-  const rotateY = useTransform(springX, [-0.5, 0, 0.5], ["-8deg", "0deg", "8deg"]); const rotateX = useTransform(springY, [-0.5, 0, 0.5], ["8deg", "0deg", "-8deg"]);
+  const mouseX = useMotionValue(0); 
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 50, damping: 30 }); 
+  const springY = useSpring(mouseY, { stiffness: 50, damping: 30 });
+  const rotateY = useTransform(springX, [-0.5, 0, 0.5], ["-4deg", "0deg", "4deg"]); 
+  const rotateX = useTransform(springY, [-0.5, 0, 0.5], ["4deg", "0deg", "-4deg"]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    mouseX.set((e.clientX - rect.left) / rect.width - 0.5); mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5); 
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
   };
   const handleMouseLeave = () => { mouseX.set(0); mouseY.set(0); };
 
@@ -92,8 +96,12 @@ export default function Dashboard() {
     setTimeout(() => setShowConfetti(false), 6000);
   }
 
-  const goalTarget = 2000;
+  // 👈 NEW: Coin Physics Logic
+  const goalTarget = 5000;
   const goalProgress = Math.min((totalWealth / goalTarget) * 100, 100);
+  const maxCoins = 45; // Max coins that fit in the jar
+  const coinsToRender = Math.floor((goalProgress / 100) * maxCoins);
+  const coinsArray = Array.from({ length: coinsToRender }, (_, i) => i);
 
   return (
     <AppLayout>
@@ -163,10 +171,10 @@ export default function Dashboard() {
           </div>
 
           <div className="h-[320px] bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl relative overflow-hidden flex flex-col justify-between group">
-            <div className="absolute inset-0 bg-gradient-to-t from-payae-accent/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-t from-payae-orange/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative z-10 flex justify-between items-start mb-4">
               <div>
-                 <h2 className="text-lg font-bold text-white flex items-center gap-2"><Target className="text-payae-accent w-5 h-5"/> Dream Setup Goal</h2>
+                 <h2 className="text-lg font-bold text-white flex items-center gap-2"><Target className="text-payae-orange w-5 h-5"/> Dream Setup Goal</h2>
                  <p className="text-xs text-gray-400 mt-1">₹{totalWealth.toFixed(0)} / ₹{goalTarget}</p>
               </div>
             </div>
@@ -174,15 +182,28 @@ export default function Dashboard() {
             <div className="relative w-32 h-44 mx-auto mt-auto flex flex-col justify-end items-center">
                <div className="w-16 h-3 bg-gray-800 border-2 border-gray-700 rounded-t-md absolute -top-3 z-20" />
                <div className="w-full h-full border-4 border-white/20 rounded-b-3xl rounded-t-lg relative overflow-hidden bg-white/5 backdrop-blur-sm shadow-[inset_0_0_20px_rgba(255,255,255,0.1)]">
-                 <motion.div 
-                   initial={{ height: 0 }} 
-                   animate={{ height: `${goalProgress}%` }} 
-                   transition={{ duration: 2, type: "spring", bounce: 0.2 }}
-                   className="absolute bottom-0 w-full bg-gradient-to-t from-[#00E5FF] to-blue-500 shadow-[0_0_30px_rgba(0,229,255,0.8)] relative"
-                 >
-                    <div className="absolute top-1 left-2 w-2 h-2 bg-white/50 rounded-full animate-ping" />
-                    <div className="absolute top-3 right-3 w-1 h-1 bg-white/50 rounded-full animate-ping" style={{ animationDelay: '0.5s'}} />
-                 </motion.div>
+                 
+                 {coinsArray.map((coin, i) => {
+                   const row = Math.floor(i / 3); 
+                   const col = i % 3;
+                   const offset = row % 2 === 0 ? 0 : 8;
+                   
+                   return (
+                     <motion.div 
+                       key={coin}
+                       initial={{ y: -200, opacity: 0, rotate: Math.random() * 40 - 20 }}
+                       animate={{ y: 0, opacity: 1, rotate: Math.random() * 10 - 5 }}
+                       transition={{ type: "spring", bounce: 0.5, delay: i * 0.05 }}
+                       className="absolute w-8 h-2.5 bg-gradient-to-b from-yellow-300 to-yellow-600 border border-yellow-700 rounded-full shadow-lg"
+                       style={{ 
+                         bottom: `${row * 5 + 4}px`, 
+                         left: `${col * 30 + offset + 8}px`,
+                         zIndex: i
+                       }}
+                     />
+                   );
+                 })}
+
                </div>
             </div>
           </div>

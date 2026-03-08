@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Search, LogOut, User as UserIcon, Menu, ArrowUpRight, ArrowDownLeft, X, Lock, Loader2, CheckCircle, QrCode, KeyRound } from "lucide-react";
+import { Bell, Search, LogOut, User as UserIcon, Menu, ArrowUpRight, ArrowDownLeft, X, Lock, Loader2, CheckCircle, QrCode, KeyRound, ShieldCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -188,6 +188,14 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
                     <input type="password" placeholder="Leave blank to keep current" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:border-payae-accent outline-none" />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <label className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2 flex items-center gap-1">Verified Identity <ShieldCheck className="w-3 h-3 text-payae-success"/></label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 w-4 h-4" />
+                    <input type="email" value={displayEmail} disabled className="w-full bg-black/60 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-gray-500 cursor-not-allowed shadow-inner font-semibold" />
                   </div>
                 </div>
 
