@@ -5,7 +5,8 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import AppLayout from "../components/layout/AppLayout";
 import StatCard from "../components/ui/StatCard";
 import AnimatedNumber from "../components/ui/AnimatedNumber";
-import { Plus, Loader2, X, Wallet, TrendingUp, Coins, Activity } from "lucide-react";
+import { Plus, Loader2, X, Wallet, TrendingUp, Coins, Activity, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 type DashboardData = { bankBalance: number; totalPayments: number; totalSavings: number; mfUnits: number; goldGrams: number; };
@@ -23,6 +24,7 @@ const fetchDashboard = async (): Promise<DashboardData> => {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard, refetchInterval: 10000 });
   const { data: rawTransactions } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
@@ -159,11 +161,9 @@ export default function Dashboard() {
                     
                     return (
                       <div key={idx} className="flex flex-col items-center w-full group relative">
-                        
                         <div className="absolute opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/90 border border-white/10 text-white text-xs font-black py-1.5 px-2.5 rounded-lg -top-10 shadow-xl z-30 translate-y-2 group-hover:translate-y-0 pointer-events-none">
                           ₹{day.total.toFixed(2)}
                         </div>
-
                         <div className="w-full max-w-[20px] md:max-w-[28px] h-32 bg-black/50 rounded-full border border-white/5 relative overflow-hidden shadow-[inset_0_0_10px_rgba(0,0,0,0.8)] mb-3 flex flex-col justify-end">
                            <motion.div
                              initial={{ height: 0, opacity: 0 }}
@@ -183,38 +183,61 @@ export default function Dashboard() {
             </motion.div>
           </div>
           
-          <motion.div className="bg-black/40 backdrop-blur-xl border border-white/5 p-5 rounded-2xl shadow-xl h-[320px] flex flex-col justify-between">
-            <div>
-              <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-payae-accent animate-pulse" /> Portfolio Distribution
-              </h2>
-              <p className="text-gray-400 text-xs mb-4">Total Value: <span className="text-white font-bold">₹{totalWealth.toFixed(2)}</span></p>
-              <div className="w-full h-3.5 bg-gray-800 rounded-full flex overflow-hidden shadow-inner border border-white/5 mb-5">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${savPct}%` }} transition={{ duration: 1 }} className="h-full bg-[#00E5FF]" />
-                <motion.div initial={{ width: 0 }} animate={{ width: `${mfPct}%` }} transition={{ duration: 1, delay: 0.2 }} className="h-full bg-[#00FF94]" />
-                <motion.div initial={{ width: 0 }} animate={{ width: `${goldPct}%` }} transition={{ duration: 1, delay: 0.4 }} className="h-full bg-[#f58220]" />
+          <div style={{ perspective: "1000px" }} className="h-[320px]">
+            <motion.div 
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+              className="bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl h-full flex flex-col relative overflow-hidden group cursor-crosshair"
+            >
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-br from-payae-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
+              />
+              
+              <div style={{ transform: "translateZ(30px)" }} className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-lg font-bold mb-1 text-white">Asset Core</h2>
+                  <p className="text-gray-400 text-xs">Active Portfolio Matrix</p>
+                </div>
+                <button onClick={() => navigate('/portfolio')} className="text-xs font-bold text-payae-accent bg-payae-accent/10 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-payae-accent hover:text-black transition-colors">
+                  Details <ArrowRight className="w-3 h-3" />
+                </button>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-               <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center justify-center text-center">
-                  <Wallet className="text-[#00E5FF] w-5 h-5 mb-1.5" />
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Savings</p>
-                  <p className="text-base font-black text-white">₹{data.totalSavings.toFixed(2)}</p>
-               </div>
-               <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center justify-center text-center">
-                  <TrendingUp className="text-[#00FF94] w-5 h-5 mb-1.5" />
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Mutual Funds</p>
-                  <p className="text-base font-black text-white">₹{data.mfUnits.toFixed(2)}</p>
-               </div>
-               <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col items-center justify-center text-center">
-                  <Coins className="text-[#f58220] w-5 h-5 mb-1.5" />
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Digital Gold</p>
-                  <p className="text-base font-black text-white">₹{goldValue.toFixed(2)}</p>
-               </div>
-            </div>
-          </motion.div>
-
+              <div style={{ transform: "translateZ(50px)" }} className="flex-1 flex items-center justify-center relative">
+                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" style={{ zIndex: -1 }}>
+                   <line x1="50%" y1="50%" x2="20%" y2="80%" stroke="#00E5FF" strokeWidth="2" strokeDasharray="4 4" />
+                   <line x1="50%" y1="50%" x2="50%" y2="20%" stroke="#00FF94" strokeWidth="2" strokeDasharray="4 4" />
+                   <line x1="50%" y1="50%" x2="80%" y2="80%" stroke="#f58220" strokeWidth="2" strokeDasharray="4 4" />
+                </svg>
+                <div className="w-24 h-24 rounded-full bg-black border-4 border-white/10 flex flex-col items-center justify-center shadow-[0_0_40px_rgba(255,255,255,0.1)] z-10">
+                  <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-0.5">Total</span>
+                  <span className="text-sm font-black text-white">₹{totalWealth.toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
+                </div>
+                <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} className="absolute bottom-2 left-4 md:left-8 bg-[#00E5FF]/10 border border-[#00E5FF]/30 p-2.5 rounded-xl shadow-[0_0_20px_rgba(0,229,255,0.2)] backdrop-blur-md flex items-center gap-2">
+                  <div className="bg-[#00E5FF] p-1.5 rounded-lg text-black"><Wallet className="w-3.5 h-3.5" /></div>
+                  <div>
+                    <p className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">{savPct.toFixed(0)}%</p>
+                    <p className="text-xs font-black text-white">₹{data.totalSavings.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                  </div>
+                </motion.div>
+                <motion.div animate={{ y: [0, 5, 0] }} transition={{ duration: 3, delay: 1, repeat: Infinity, ease: "easeInOut" }} className="absolute top-2 left-1/2 -translate-x-1/2 bg-[#00FF94]/10 border border-[#00FF94]/30 p-2.5 rounded-xl shadow-[0_0_20px_rgba(0,255,148,0.2)] backdrop-blur-md flex items-center gap-2">
+                  <div className="bg-[#00FF94] p-1.5 rounded-lg text-black"><TrendingUp className="w-3.5 h-3.5" /></div>
+                  <div>
+                    <p className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">{mfPct.toFixed(0)}%</p>
+                    <p className="text-xs font-black text-white">₹{data.mfUnits.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                  </div>
+                </motion.div>
+                <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 3, delay: 2, repeat: Infinity, ease: "easeInOut" }} className="absolute bottom-2 right-4 md:right-8 bg-[#f58220]/10 border border-[#f58220]/30 p-2.5 rounded-xl shadow-[0_0_20px_rgba(245,130,32,0.2)] backdrop-blur-md flex items-center gap-2">
+                  <div className="bg-[#f58220] p-1.5 rounded-lg text-black"><Coins className="w-3.5 h-3.5" /></div>
+                  <div>
+                    <p className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">{goldPct.toFixed(0)}%</p>
+                    <p className="text-xs font-black text-white">₹{goldValue.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
     </AppLayout>
