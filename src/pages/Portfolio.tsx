@@ -4,7 +4,8 @@ import api from "../api/client";
 import AppLayout from "../components/layout/AppLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wallet, TrendingUp, Coins, Loader2, PieChart, ArrowDownToLine, X, Building } from "lucide-react";
-import toast from "react-hot-toast"
+import toast from "react-hot-toast";
+
 type AssetType = "SAVINGS" | "MF" | "GOLD";
 
 export default function Portfolio() {
@@ -13,19 +14,26 @@ export default function Portfolio() {
 
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetType>("SAVINGS");
-  const [withdrawAmount, setWithdrawAmount] = useState(1);
+  const [withdrawAmount, setWithdrawAmount] = useState(0.01);
 
   const { calcSavings, calcMf, calcGold } = useMemo(() => {
     let s = 0, m = 0, g = 0;
     (rawTransactions || []).forEach((tx: any) => {
+      const asset = (tx.assetType || "SAVINGS").toUpperCase();
+      
       if (tx.type === "INVESTMENT" || tx.type === "ROUND_UP") {
-        const asset = (tx.assetType || "SAVINGS").toUpperCase();
         if (asset.includes("MF") || asset.includes("MUTUAL")) m += tx.amount;
         else if (asset.includes("GOLD")) g += tx.amount;
         else s += tx.amount;
+      } 
+      else if (tx.type === "LIQUIDATION" || tx.type === "WITHDRAW_ASSET") {
+        if (asset.includes("MF") || asset.includes("MUTUAL")) m -= tx.amount;
+        else if (asset.includes("GOLD")) g -= tx.amount;
+        else s -= tx.amount;
       }
     });
-    return { calcSavings: s, calcMf: m, calcGold: g };
+    
+    return { calcSavings: Math.max(0, s), calcMf: Math.max(0, m), calcGold: Math.max(0, g) };
   }, [rawTransactions]);
 
   const totalWealth = calcSavings + calcMf + calcGold;
@@ -34,16 +42,28 @@ export default function Portfolio() {
 
   const withdrawMutation = useMutation({
     mutationFn: async () => {
-      await api.post("/api/users/topup", { amount: withdrawAmount, assetType: selectedAsset });
+      const res = await api.post("/api/users/topup", { amount: withdrawAmount, assetType: selectedAsset });
+      return res.data;
     },
     onSuccess: () => {
-      toast.success(`Successfully liquidated ₹${withdrawAmount} from ${selectedAsset}!`);
+      toast.success(`Successfully liquidated ₹${withdrawAmount.toFixed(2)} from ${selectedAsset}!`);
       setShowWithdraw(false);
-      setWithdrawAmount(1);
+      setWithdrawAmount(0.01);
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard_balance'] }); 
+    },
+    onError: (error: any) => {
+      const msg = error.response?.data?.message || "Failed to liquidate asset. Check backend connection.";
+      toast.error(msg);
     }
   });
+
+  const handleTabSwitch = (asset: AssetType) => {
+    setSelectedAsset(asset);
+    const newMax = asset === "SAVINGS" ? calcSavings : asset === "MF" ? calcMf : calcGold;
+    setWithdrawAmount(newMax > 0 ? Math.min(1, newMax) : 0);
+  };
 
   if (isLoading) return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-payae-accent" /></div></AppLayout>;
   if (isError) return <AppLayout><p className="text-red-400 text-center mt-10">Failed to load Portfolio data.</p></AppLayout>;
@@ -66,9 +86,9 @@ export default function Portfolio() {
               <p className="text-gray-400 text-sm mb-6">Select which specific asset you want to withdraw back to your Virtual Balance.</p>
               
               <div className="flex bg-black/50 p-1.5 rounded-xl border border-white/10 mb-6 relative">
-                <button onClick={() => { setSelectedAsset("SAVINGS"); setWithdrawAmount(1); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all z-10 ${selectedAsset === "SAVINGS" ? 'text-black' : 'text-gray-400 hover:text-white'}`}>Savings</button>
-                <button onClick={() => { setSelectedAsset("MF"); setWithdrawAmount(1); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all z-10 ${selectedAsset === "MF" ? 'text-black' : 'text-gray-400 hover:text-white'}`}>Funds</button>
-                <button onClick={() => { setSelectedAsset("GOLD"); setWithdrawAmount(1); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all z-10 ${selectedAsset === "GOLD" ? 'text-black' : 'text-gray-400 hover:text-white'}`}>Gold</button>
+                <button onClick={() => handleTabSwitch("SAVINGS")} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all z-10 ${selectedAsset === "SAVINGS" ? 'text-black' : 'text-gray-400 hover:text-white'}`}>Savings</button>
+                <button onClick={() => handleTabSwitch("MF")} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all z-10 ${selectedAsset === "MF" ? 'text-black' : 'text-gray-400 hover:text-white'}`}>Funds</button>
+                <button onClick={() => handleTabSwitch("GOLD")} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all z-10 ${selectedAsset === "GOLD" ? 'text-black' : 'text-gray-400 hover:text-white'}`}>Gold</button>
                 <div className="absolute top-1.5 bottom-1.5 w-[calc(33.33%-4px)] transition-transform duration-300 ease-out z-0 pointer-events-none"
                      style={{ transform: `translateX(${selectedAsset === 'SAVINGS' ? '0%' : selectedAsset === 'MF' ? '100%' : '200%'})` }}>
                   <div className={`w-full h-full rounded-lg ${selectedAsset === 'SAVINGS' ? 'bg-[#00E5FF]' : selectedAsset === 'MF' ? 'bg-[#00FF94]' : 'bg-[#f58220]'}`} />
@@ -76,19 +96,19 @@ export default function Portfolio() {
               </div>
               
               <div className="mb-6 bg-white/5 p-4 rounded-2xl border border-white/5">
-                <div className="flex justify-between text-sm text-gray-400 mb-3"><span className="uppercase tracking-widest font-bold text-xs">Amount</span><span className="text-white font-bold text-lg">₹{withdrawAmount}</span></div>
+                <div className="flex justify-between text-sm text-gray-400 mb-3"><span className="uppercase tracking-widest font-bold text-xs">Amount</span><span className="text-white font-bold text-lg">₹{withdrawAmount.toFixed(2)}</span></div>
                 {maxAmount > 0 ? (
                   <>
-                    <input type="range" min="1" max={Math.max(maxAmount, 1)} step="1" value={withdrawAmount} onChange={(e) => setWithdrawAmount(Number(e.target.value))} className={`w-full ${selectedAsset === 'SAVINGS' ? 'accent-[#00E5FF]' : selectedAsset === 'MF' ? 'accent-[#00FF94]' : 'accent-[#f58220]'}`} />
-                    <div className="flex justify-between text-[10px] text-gray-500 mt-2 font-bold"><span>₹1</span><span>Max: ₹{maxAmount.toFixed(0)}</span></div>
+                    <input type="range" min="0.01" max={maxAmount} step="0.01" value={withdrawAmount} onChange={(e) => setWithdrawAmount(Number(e.target.value))} className={`w-full ${selectedAsset === 'SAVINGS' ? 'accent-[#00E5FF]' : selectedAsset === 'MF' ? 'accent-[#00FF94]' : 'accent-[#f58220]'}`} />
+                    <div className="flex justify-between text-[10px] text-gray-500 mt-2 font-bold"><span>₹0.01</span><span>Max: ₹{maxAmount.toFixed(2)}</span></div>
                   </>
                 ) : (
                   <p className="text-xs text-red-400 font-semibold py-2">Insufficient balance in this asset.</p>
                 )}
               </div>
 
-              <button onClick={() => withdrawMutation.mutate()} disabled={withdrawMutation.isPending || maxAmount <= 0 || withdrawAmount > maxAmount} className="w-full bg-red-500 text-white font-bold py-4 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center hover:bg-red-600 transition-colors shadow-lg">
-                {withdrawMutation.isPending ? <Loader2 className="animate-spin" /> : `Liquidate ₹${withdrawAmount}`}
+              <button onClick={() => withdrawMutation.mutate()} disabled={withdrawMutation.isPending || maxAmount <= 0 || withdrawAmount > maxAmount || withdrawAmount <= 0} className="w-full bg-red-500 text-white font-bold py-4 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center hover:bg-red-600 transition-colors shadow-lg">
+                {withdrawMutation.isPending ? <Loader2 className="animate-spin" /> : `Liquidate ₹${withdrawAmount.toFixed(2)}`}
               </button>
             </motion.div>
           </div>
