@@ -11,7 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   
-  const isIdle = useIdle(300e3);
+  const isIdle = useIdle(45e3);
   const location = useLocation();
 
   useEffect(() => {

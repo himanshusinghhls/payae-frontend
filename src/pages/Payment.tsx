@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import api from "../api/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, CheckCircle, ShieldCheck, Settings2, AlertCircle, XCircle, Receipt, QrCode, X, Camera } from "lucide-react";
+import { Loader2, CheckCircle, ShieldCheck, Settings2, AlertCircle, XCircle, Receipt, QrCode, X, Camera, Lock } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import AnimatedNumber from "../components/ui/AnimatedNumber";
@@ -20,11 +20,9 @@ type RoundUpRule = 'SMART_ALGO' | 'PERCENT_5' | 'PERCENT_10' | 'CUSTOM';
 
 export default function Payment() {
   const queryClient = useQueryClient(); 
-  
   const [payeeName, setPayeeName] = useState("");
   const [payeeUpi, setPayeeUpi] = useState("");
   const [showScanner, setShowScanner] = useState(false);
-
   const [baseAmount, setBaseAmount] = useState<number | "">("");
   const [roundup, setRoundup] = useState<number>(0);
   const [isRoundUpEnabled, setIsRoundUpEnabled] = useState(() => localStorage.getItem('autoSaveEnabled') !== 'false');
@@ -32,6 +30,10 @@ export default function Payment() {
   const [customPercent, setCustomPercent] = useState<number>(15);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "success" | "failed">("idle");
   const [lastPaidRoundup, setLastPaidRoundup] = useState(0);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [enteredPin, setEnteredPin] = useState("");
+  const [pinErrorShake, setPinErrorShake] = useState(false);
+  const HIGH_VALUE_THRESHOLD = 10000;
 
   const { data: dashboardData } = useQuery({
     queryKey: ['dashboard_balance'],
@@ -62,6 +64,7 @@ export default function Payment() {
 
   const totalPayable = Number(baseAmount) + roundup;
   const isBalanceLow = totalPayable > currentBalance;
+  const isHighValue = Number(baseAmount) > HIGH_VALUE_THRESHOLD;
 
   const handleScan = (result: string) => {
     try {
@@ -124,7 +127,7 @@ export default function Payment() {
         const rzp = new (window as any).Razorpay(options);
         
         rzp.on('payment.failed', async function () {
-          try { await api.post("/api/payments/failed", { orderId: actualOrderId, amount: finalBaseAmount, roundUpAmount: finalRoundupAmount }); } catch(e) {}
+          try { await api.post("/api/payments/failed", { orderId: actualOrderId, amount: finalBaseAmount, roundUpAmount: finalRoundupAmount, payeeName: payeeName || payeeUpi || "Unknown Payee" }); } catch(e) {}
           reject(new Error("Payment Declined"));
         });
         rzp.open();
@@ -150,10 +153,78 @@ export default function Payment() {
     }
   });
 
+  const handlePayClick = () => {
+    if (isHighValue) {
+      setShowPinModal(true);
+      setEnteredPin("");
+    } else {
+      processPayment.mutate();
+    }
+  };
+
+  const handlePinInput = (digit: string) => {
+    if (enteredPin.length < 4) {
+      const newPin = enteredPin + digit;
+      setEnteredPin(newPin);
+      
+      if (newPin.length === 4) {
+        const storedPin = localStorage.getItem("userPin") || "0000";
+        if (newPin === storedPin) {
+          setShowPinModal(false);
+          processPayment.mutate();
+        } else {
+          setPinErrorShake(true);
+          setTimeout(() => {
+            setPinErrorShake(false);
+            setEnteredPin("");
+          }, 500);
+        }
+      }
+    }
+  };
+
   return (
     <AppLayout>
       <div className="max-w-xl mx-auto mt-6 relative z-10 px-4 md:px-0">
         
+        <AnimatePresence>
+          {showPinModal && (
+            <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md">
+              <motion.div 
+                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="w-full max-w-md bg-payae-bg border-t md:border border-white/10 p-8 rounded-t-[40px] md:rounded-[40px] shadow-[0_-20px_60px_rgba(0,0,0,0.8)] flex flex-col items-center"
+              >
+                <div className="w-16 h-1.5 bg-white/20 rounded-full mb-6 md:hidden" onClick={() => setShowPinModal(false)} />
+                <div className="w-16 h-16 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mb-4"><Lock className="w-8 h-8" /></div>
+                <h3 className="text-2xl font-bold text-white mb-2">High Value Transaction</h3>
+                <p className="text-gray-400 text-sm mb-8 text-center">Verify identity to send ₹{totalPayable.toFixed(2)}</p>
+
+                <motion.div animate={pinErrorShake ? { x: [-10, 10, -10, 10, 0] } : {}} transition={{ duration: 0.4 }} className="flex gap-4 mb-10">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className={`w-5 h-5 rounded-full border-2 transition-all ${pinErrorShake ? 'border-red-500 bg-red-500/50' : enteredPin.length > i ? 'bg-payae-accent border-payae-accent shadow-[0_0_15px_rgba(0,229,255,0.5)]' : 'border-white/20'}`} />
+                  ))}
+                </motion.div>
+
+                <div className="grid grid-cols-3 gap-6 w-full max-w-[280px]">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 'C', 0, 'X'].map((key) => (
+                    <button 
+                      key={key} 
+                      onClick={() => {
+                        if (key === 'C') setEnteredPin("");
+                        else if (key === 'X') setShowPinModal(false);
+                        else handlePinInput(key.toString());
+                      }}
+                      className={`h-16 rounded-full text-2xl font-bold flex items-center justify-center transition-all ${key === 'X' || key === 'C' ? 'text-gray-500 hover:bg-white/5' : 'text-white hover:bg-white/10 bg-white/5'}`}
+                    >
+                      {key}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         <AnimatePresence>
           {showScanner && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-6">
@@ -173,6 +244,7 @@ export default function Payment() {
               <CheckCircle className="text-payae-green w-16 h-16 mx-auto mb-6" />
               <h2 className="text-3xl font-bold text-white mb-2">Payment Successful</h2>
               {lastPaidRoundup > 0 ? <p className="text-gray-400">₹{lastPaidRoundup.toFixed(2)} routed to wealth portfolio!</p> : <p className="text-gray-400">Payment completed.</p>}
+              {isHighValue && <p className="text-xs text-yellow-500 mt-4 font-bold tracking-widest uppercase">Security Receipt Sent to Email</p>}
             </motion.div>
           ) : paymentStatus === "failed" ? (
              <motion.div key="failed" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-black/60 backdrop-blur-3xl border border-red-500/30 p-8 rounded-3xl text-center shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
@@ -213,6 +285,14 @@ export default function Payment() {
               <div className="mb-6 relative">
                 <span className="absolute left-4 top-4 text-gray-400 text-xl font-bold">₹</span>
                 <input type="number" placeholder="Enter amount" value={baseAmount} onChange={(e) => setBaseAmount(e.target.value === "" ? "" : Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-10 pr-4 text-white text-2xl font-bold focus:border-payae-accent outline-none" />
+                
+                <AnimatePresence>
+                  {isHighValue && (
+                    <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="absolute right-4 top-1/2 -translate-y-1/2 bg-yellow-500/20 text-yellow-500 text-[10px] font-bold px-2 py-1 rounded-md border border-yellow-500/30 flex items-center gap-1">
+                      <Lock className="w-3 h-3"/> PIN Protected
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {Number(baseAmount) > 0 && (
@@ -262,8 +342,8 @@ export default function Payment() {
                 )}
               </AnimatePresence>
 
-              <button onClick={() => processPayment.mutate()} disabled={!baseAmount || !payeeUpi || processPayment.isPending || isBalanceLow} className={`w-full text-white font-bold py-4 rounded-2xl flex justify-center items-center gap-2 transition-all ${!baseAmount || !payeeUpi || isBalanceLow ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-gradient-to-r from-payae-brand to-blue-600 shadow-lg hover:shadow-blue-500/25'}`}>
-                {processPayment.isPending ? <Loader2 className="animate-spin" /> : `Securely Pay ₹${totalPayable.toFixed(2)}`}
+              <button onClick={handlePayClick} disabled={!baseAmount || !payeeUpi || processPayment.isPending || isBalanceLow} className={`w-full text-white font-bold py-4 rounded-2xl flex justify-center items-center gap-2 transition-all ${!baseAmount || !payeeUpi || isBalanceLow ? 'bg-gray-600 cursor-not-allowed opacity-50' : isHighValue ? 'bg-yellow-500 text-black hover:bg-yellow-400 shadow-lg' : 'bg-gradient-to-r from-payae-brand to-blue-600 shadow-lg hover:shadow-blue-500/25'}`}>
+                {processPayment.isPending ? <Loader2 className="animate-spin" /> : isHighValue ? `Verify Identity to Pay ₹${totalPayable.toFixed(2)}` : `Securely Pay ₹${totalPayable.toFixed(2)}`}
               </button>
             </motion.div>
           )}
