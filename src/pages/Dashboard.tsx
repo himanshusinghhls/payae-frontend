@@ -21,6 +21,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const { data: dashData, isLoading: isDashLoading } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard, refetchInterval: 10000 });
   const { data: rawTransactions, isLoading: isLedgerLoading } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
+  
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number>(1000);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -73,6 +74,7 @@ export default function Dashboard() {
   }, [rawTransactions]);
 
   const maxDailyValue = Math.max(...weeklyData.map(d => d.total), 50);
+
   const mouseX = useMotionValue(0); 
   const mouseY = useMotionValue(0);
   const springX = useSpring(mouseX, { stiffness: 50, damping: 30 }); 
@@ -169,6 +171,7 @@ export default function Dashboard() {
               </div>
             </motion.div>
           </div>
+
           <div className="h-[320px] bg-black/40 backdrop-blur-xl border border-white/5 p-6 rounded-2xl shadow-xl relative flex flex-col justify-between group overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-t from-payae-orange/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none z-0" />
             <div className="relative z-10 flex justify-between items-start mb-4">
@@ -178,35 +181,37 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <div className="relative w-32 h-48 mx-auto mt-auto flex flex-col justify-end items-center z-10">
+            <div className="relative w-32 h-56 mx-auto mt-auto flex flex-col justify-end items-center z-10">
                <div className="w-16 h-3 bg-gray-800 border-2 border-gray-700 rounded-t-md absolute -top-3 z-30" />
                <div className="w-full h-full border-4 border-white/20 rounded-b-3xl rounded-t-lg relative overflow-hidden bg-white/5 backdrop-blur-sm shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
                  
                  {coinsArray.map((coin, i) => {
-                   const cols = 6; 
+                   const cols = 4; 
                    const row = Math.floor(i / cols); 
                    const col = i % cols;
-                   const randomXJitter = Math.random() * 4 - 2; 
-                   const randomYJitter = Math.random() * 3 - 1.5;
-                   const xOffset = col * 16 + (row % 2 === 0 ? 0 : 8) + randomXJitter;
-                   const yOffset = row * 4 + 2 + randomYJitter;
+                   const rowOffset = row % 2 === 0 ? 0 : 12;
+                   const baseLeft = col * 28 + rowOffset; 
+                   const randomXJitter = (Math.random() - 0.5) * 4; 
+                   const randomYJitter = (Math.random() - 0.5) * 2;
+                   const boundedLeft = Math.max(0, Math.min(baseLeft + randomXJitter, 100));
+                   const boundedBottom = row * 3.5 + randomYJitter;
 
                    return (
                      <motion.div 
                        key={coin}
-                       initial={{ y: -400, opacity: 0, rotate: Math.random() * 360 }}
-                       animate={{ y: 0, opacity: 1, rotate: Math.random() * 20 - 10 }}
+                       initial={{ y: -800, opacity: 0, rotate: (i % 2 === 0 ? 1 : -1) * (Math.random() * 360 + 180) }}
+                       animate={{ y: 0, opacity: 1, rotate: Math.random() * 16 - 8 }}
                        transition={{ 
                          type: "spring", 
-                         stiffness: 120,
-                         damping: 8,
-                         mass: 1.5,
-                         delay: Math.min(i * 0.02, 2.5) 
+                         stiffness: 400,
+                         damping: 15,
+                         mass: 0.8,
+                         delay: i * 0.015
                        }}
-                       className="absolute w-8 h-2.5 bg-gradient-to-b from-yellow-300 to-yellow-600 border border-yellow-700 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20"
+                       className="absolute w-7 h-2.5 bg-gradient-to-b from-yellow-300 to-yellow-600 border border-yellow-700 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20"
                        style={{ 
-                         bottom: `${yOffset}px`, 
-                         left: `${xOffset}px`,
+                         bottom: `${boundedBottom}px`, 
+                         left: `${boundedLeft}px`,
                          zIndex: i 
                        }}
                      />

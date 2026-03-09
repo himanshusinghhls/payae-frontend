@@ -25,12 +25,16 @@ export default function Ledger() {
 
   const smartLedger = useMemo(() => {
     const transactions = rawTransactions || [];
-    const basePayments = transactions.filter((t: any) => t.type?.includes("PAYMENT")).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    let availableInvestments = transactions.filter((t: any) => t.type === "INVESTMENT");
+    const basePayments = transactions
+        .filter((t: any) => t.type !== "INVESTMENT" && t.type !== "ROUND_UP")
+        .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    let availableInvestments = transactions.filter((t: any) => t.type === "INVESTMENT" || t.type === "ROUND_UP");
 
     return basePayments.map((payment: any) => {
-      const isFailed = payment.type === "PAYMENT_FAILED" || payment.status === "FAILED";
-      const isReceived = payment.type === "PAYMENT_RECEIVED";
+      const isFailed = payment.type === "PAYMENT_FAILED" || payment.status === "FAILED" || payment.type === "FAILED";
+      const isReceived = payment.type === "PAYMENT_RECEIVED" || payment.type === "TOPUP";
+      
       if (isFailed || isReceived) return { ...payment, isFailed, isReceived, linkedRoundups: [], totalRoundupAmount: 0, totalCharge: payment.amount };
 
       const pTime = new Date(payment.timestamp).getTime();
@@ -47,7 +51,6 @@ export default function Ledger() {
   const downloadPDF = () => {
     try {
       const doc = new jsPDF();
-    
       doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(245, 130, 32);
@@ -57,7 +60,6 @@ export default function Ledger() {
       doc.text("E", 34, 22);
       doc.setTextColor(100, 100, 100);
       doc.text(" Statement", 41, 22);
-      
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
@@ -72,7 +74,7 @@ export default function Ledger() {
         return [
           new Date(t.timestamp).toLocaleDateString(),
           t.isFailed ? "Failed" : t.isReceived ? "Received" : "Sent",
-          t.description || t.payeeName || "UPI Payment",
+          t.description || t.payeeName || "UPI Transaction",
           `Rs. ${t.amount.toFixed(2)}`,
           t.totalRoundupAmount > 0 ? `+ Rs. ${t.totalRoundupAmount.toFixed(2)}` : "-",
           `Rs. ${t.totalCharge.toFixed(2)}`
@@ -130,7 +132,7 @@ export default function Ledger() {
             {visibleLedger.map((payment: any) => {
               const isBaseExpanded = expandedBaseId === payment.id;
               const isWalletExpanded = expandedWalletId === payment.id;
-              const displayName = payment.description || payment.payeeName || "UPI Payment";
+              const displayName = payment.description || payment.payeeName || "UPI Transaction";
               const isInteractive = !payment.isFailed && !payment.isReceived;
 
               return (
@@ -140,11 +142,11 @@ export default function Ledger() {
                       {payment.isFailed ? <div className="p-2.5 bg-red-500/10 rounded-lg text-red-500"><XCircle className="w-5 h-5" /></div> : payment.isReceived ? <div className="p-2.5 bg-payae-success/10 rounded-lg text-payae-success"><ArrowDownLeft className="w-5 h-5" /></div> : <div className="p-2.5 bg-white/10 rounded-lg text-white"><Store className="w-5 h-5" /></div>}
                       <div>
                         <p className={`font-bold text-base ${payment.isFailed ? 'text-red-400' : payment.isReceived ? 'text-payae-success' : 'text-white'}`}>{payment.isFailed ? 'Failed Transaction' : payment.isReceived ? 'Received Money' : displayName}</p>
-                        <p className="text-[11px] text-gray-400">{payment.isReceived ? `${displayName} • ${formatTimeIST(payment.timestamp)}` : formatTimeIST(payment.timestamp)}</p>
+                        <p className="text-[11px] text-gray-400">{payment.isReceived ? `Wallet Top-up • ${formatTimeIST(payment.timestamp)}` : formatTimeIST(payment.timestamp)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <div className={`text-lg font-black ${payment.isFailed ? 'text-red-400 line-through opacity-70' : payment.isReceived ? 'text-payae-success' : 'text-white'}`}>{payment.isReceived ? '+' : '-'}₹{payment.totalCharge.toFixed(2)}</div>
+                      <div className={`text-lg font-black ${payment.isFailed ? 'text-red-400 opacity-70' : payment.isReceived ? 'text-payae-success' : 'text-white'}`}>{payment.isReceived ? '+' : '-'}₹{payment.totalCharge.toFixed(2)}</div>
                       {isInteractive && <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isBaseExpanded ? 'rotate-180' : ''}`} />}
                     </div>
                   </div>
