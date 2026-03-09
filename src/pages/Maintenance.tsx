@@ -1,0 +1,56 @@
+import { motion } from "framer-motion";
+import { ServerCrash, ShieldAlert } from "lucide-react";
+
+export default function Maintenance() {
+  return (
+    <div className="min-h-screen bg-[#0A0F1C] text-white flex flex-col justify-center items-center p-6 relative overflow-hidden selection:bg-payae-accent selection:text-black">
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-payae-accent/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-red-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-1 bg-payae-accent/40 animate-pulse shadow-[0_0_20px_#00E5FF]" />
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="z-10 text-center max-w-lg w-full"
+      >
+        <div className="flex justify-center mb-8 relative">
+           <motion.div 
+             animate={{ opacity: [1, 0.5, 1, 0.1, 1], x: [0, -2, 2, -1, 0] }} 
+             transition={{ repeat: Infinity, duration: 4, times: [0, 0.1, 0.2, 0.3, 1] }}
+             className="relative"
+           >
+             <ShieldAlert className="w-20 h-20 text-payae-orange mx-auto mb-4 drop-shadow-[0_0_15px_rgba(245,130,32,0.5)]" />
+           </motion.div>
+        </div>
+
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight flex items-center justify-center gap-1 mb-6 opacity-80">
+          Pay<span className="text-payae-orange">A</span><span className="text-payae-green -ml-1 -mr-1 rotate-[-15deg] font-black text-3xl md:text-4xl drop-shadow-md">₹</span><span className="text-payae-orange">E</span>
+        </h1>
+
+        <div className="glitch-wrapper mb-8">
+          <h2 className="text-2xl md:text-4xl font-black text-white glitch-text uppercase tracking-widest drop-shadow-xl" data-text="SYSTEM OVERRIDE">
+            SYSTEM OVERRIDE
+          </h2>
+        </div>
+
+        <div className="bg-black/60 border border-white/10 p-6 md:p-8 rounded-2xl backdrop-blur-md text-left w-full shadow-[0_0_40px_rgba(0,229,255,0.05)]">
+          <div className="flex items-center gap-3 mb-4 text-payae-accent font-bold uppercase tracking-widest text-xs">
+            <ServerCrash className="w-4 h-4" /> Core Upgrades in progress
+          </div>
+          <p className="text-gray-400 text-sm leading-relaxed mb-6">
+            Our master routing nodes are currently offline for scheduled infrastructure maintenance. Wealth routing, UPI payments, and portfolio interactions are temporarily disabled.
+          </p>
+          <div className="bg-payae-success/10 border border-payae-success/20 p-4 rounded-xl flex items-start gap-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-payae-success mt-1 animate-pulse shrink-0 drop-shadow-[0_0_5px_#00FF94]" />
+            <p className="text-payae-success text-xs font-bold leading-relaxed">System Lock Engaged. Your virtual balance, ledger data, and stored assets are deeply encrypted and 100% safe.</p>
+          </div>
+        </div>
+
+        <div className="mt-12 text-gray-600 text-[10px] font-mono uppercase tracking-[0.3em] animate-pulse">
+          Estimated Time to Resolve: &lt; 2 Hours
+        </div>
+      </motion.div>
+    </div>
+  );
+}

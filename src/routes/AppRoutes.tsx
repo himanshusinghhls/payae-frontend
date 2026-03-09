@@ -13,6 +13,9 @@ import Contact from "../pages/Contact";
 import Privacy from "../pages/Privacy";
 import Terms from "../pages/Terms";
 import ProtectedRoute from "./ProtectedRoute";
+import Maintenance from "../pages/Maintenance";
+
+const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -22,6 +25,10 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppRoutes() {
+  if (isMaintenanceMode) {
+    return <Maintenance />;
+  }
+  
   return (
     <BrowserRouter>
       <Routes>
