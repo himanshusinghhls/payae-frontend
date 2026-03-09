@@ -33,16 +33,18 @@ export default function Ledger() {
 
     return basePayments.map((payment: any) => {
       const isFailed = payment.type === "PAYMENT_FAILED" || payment.status === "FAILED" || payment.type === "FAILED";
-      const isReceived = payment.type === "PAYMENT_RECEIVED" || payment.type === "TOPUP";
+      const isLiquidation = payment.type === "LIQUIDATION" || payment.type === "WITHDRAW_ASSET";
       
-      if (isFailed || isReceived) return { ...payment, isFailed, isReceived, linkedRoundups: [], totalRoundupAmount: 0, totalCharge: payment.amount };
+      const isReceived = payment.type === "PAYMENT_RECEIVED" || payment.type === "TOPUP" || isLiquidation;
+      
+      if (isFailed || isReceived) return { ...payment, isFailed, isReceived, isLiquidation, linkedRoundups: [], totalRoundupAmount: 0, totalCharge: payment.amount };
 
       const pTime = new Date(payment.timestamp).getTime();
       const linkedRoundups = availableInvestments.filter((r: any) => { const rTime = new Date(r.timestamp).getTime(); return rTime >= pTime && rTime <= pTime + 10000; });
       availableInvestments = availableInvestments.filter((r: any) => !linkedRoundups.includes(r));
       const totalRoundupAmount = linkedRoundups.reduce((sum: number, r: any) => sum + r.amount, 0);
 
-      return { ...payment, isFailed: false, isReceived: false, linkedRoundups, totalRoundupAmount, totalCharge: payment.amount + totalRoundupAmount };
+      return { ...payment, isFailed: false, isReceived: false, isLiquidation: false, linkedRoundups, totalRoundupAmount, totalCharge: payment.amount + totalRoundupAmount };
     });
   }, [rawTransactions]);
 
@@ -73,7 +75,7 @@ export default function Ledger() {
 
         return [
           new Date(t.timestamp).toLocaleDateString(),
-          t.isFailed ? "Failed" : t.isReceived ? "Received" : "Sent",
+          t.isFailed ? "Failed" : t.isLiquidation ? "Liquidated" : t.isReceived ? "Received" : "Sent",
           t.description || t.payeeName || "UPI Transaction",
           `Rs. ${t.amount.toFixed(2)}`,
           t.totalRoundupAmount > 0 ? `+ Rs. ${t.totalRoundupAmount.toFixed(2)}` : "-",
@@ -132,7 +134,7 @@ export default function Ledger() {
             {visibleLedger.map((payment: any) => {
               const isBaseExpanded = expandedBaseId === payment.id;
               const isWalletExpanded = expandedWalletId === payment.id;
-              const displayName = payment.description || payment.payeeName || "UPI Transaction";
+              const displayName = payment.isLiquidation ? "Asset Liquidated" : payment.description || payment.payeeName || "UPI Transaction";
               const isInteractive = !payment.isFailed && !payment.isReceived;
 
               return (
@@ -141,8 +143,8 @@ export default function Ledger() {
                     <div className="flex items-center gap-3">
                       {payment.isFailed ? <div className="p-2.5 bg-red-500/10 rounded-lg text-red-500"><XCircle className="w-5 h-5" /></div> : payment.isReceived ? <div className="p-2.5 bg-payae-success/10 rounded-lg text-payae-success"><ArrowDownLeft className="w-5 h-5" /></div> : <div className="p-2.5 bg-white/10 rounded-lg text-white"><Store className="w-5 h-5" /></div>}
                       <div>
-                        <p className={`font-bold text-base ${payment.isFailed ? 'text-red-400' : payment.isReceived ? 'text-payae-success' : 'text-white'}`}>{payment.isFailed ? 'Failed Transaction' : payment.isReceived ? 'Received Money' : displayName}</p>
-                        <p className="text-[11px] text-gray-400">{payment.isReceived ? `Wallet Top-up • ${formatTimeIST(payment.timestamp)}` : formatTimeIST(payment.timestamp)}</p>
+                        <p className={`font-bold text-base ${payment.isFailed ? 'text-red-400' : payment.isReceived ? 'text-payae-success' : 'text-white'}`}>{payment.isFailed ? 'Failed Transaction' : payment.isLiquidation ? 'Liquidated Funds' : payment.isReceived ? 'Received Money' : displayName}</p>
+                        <p className="text-[11px] text-gray-400">{payment.isReceived ? `${displayName} • ${formatTimeIST(payment.timestamp)}` : formatTimeIST(payment.timestamp)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">

@@ -50,15 +50,26 @@ export default function Payment() {
     if (!val || val <= 0 || !isRoundUpEnabled) { setRoundup(0); return; }
     let calculated = 0;
     if (activeRule === 'SMART_ALGO') {
-      if (val < 25) calculated = 1;
-      else if (val >= 25 && val < 50) calculated = 2;
-      else if (val >= 50 && val < 100) { const rem = val % 5; calculated = rem === 0 ? 0 : 5 - rem; if (calculated < 4) calculated += 5; }
-      else if (val >= 100 && val < 500) { const rem = val % 10; calculated = rem === 0 ? 0 : 10 - rem; if (calculated < 9) calculated += 10; }
-      else if (val >= 500 && val < 1000) { const rem = val % 20; calculated = rem === 0 ? 0 : 20 - rem; }
-      else { const rem = val % 50; calculated = rem === 0 ? 0 : 50 - rem; }
+      if (val <= 50) { 
+        calculated = 5 - (val % 5); 
+        if (calculated === 0 || calculated === 5) calculated = 5; 
+      }
+      else if (val <= 100) { 
+        calculated = 10 - (val % 10); 
+        if (calculated === 0 || calculated === 10) calculated = 10; 
+      }
+      else if (val <= 500) { 
+        calculated = 50 - (val % 50); 
+        if (calculated === 0 || calculated === 50) calculated = 50; 
+      }
+      else { 
+        calculated = 100 - (val % 100); 
+        if (calculated === 0 || calculated === 100) calculated = 100; 
+      }
     } else if (activeRule === 'PERCENT_5') calculated = val * 0.05;
     else if (activeRule === 'PERCENT_10') calculated = val * 0.10;
     else if (activeRule === 'CUSTOM') calculated = val * (customPercent / 100);
+    
     setRoundup(Math.round(calculated * 100) / 100);
   }, [baseAmount, isRoundUpEnabled, activeRule, customPercent]);
 
@@ -201,7 +212,7 @@ export default function Payment() {
 
                 <motion.div animate={pinErrorShake ? { x: [-10, 10, -10, 10, 0] } : {}} transition={{ duration: 0.4 }} className="flex gap-4 mb-10">
                   {[0, 1, 2, 3].map((i) => (
-                    <div key={i} className={`w-5 h-5 rounded-full border-2 transition-all ${pinErrorShake ? 'border-red-500 bg-red-500/50' : enteredPin.length > i ? 'bg-payae-accent border-payae-accent shadow-[0_0_15px_rgba(0,229,255,0.5)]' : 'border-white/20'}`} />
+                    <div key={i} className={`w-5 h-5 rounded-full border-2 transition-all ${pinErrorShake ? 'border-red-500 bg-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.6)]' : enteredPin.length > i ? 'bg-payae-accent border-payae-accent shadow-[0_0_15px_rgba(0,229,255,0.5)]' : 'border-white/20'}`} />
                   ))}
                 </motion.div>
 

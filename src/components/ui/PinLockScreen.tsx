@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 export default function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
   const [pin, setPin] = useState("");
+  const [pinErrorShake, setPinErrorShake] = useState(false); 
   const correctPin = localStorage.getItem("userPin") || "0000";
 
   const handlePress = (num: string) => {
@@ -20,7 +21,11 @@ export default function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
       onUnlock();
     } else {
       toast.error("Incorrect PIN");
-      setPin("");
+      setPinErrorShake(true);
+      setTimeout(() => {
+        setPinErrorShake(false);
+        setPin("");
+      }, 500);
     }
   };
 
@@ -37,11 +42,18 @@ export default function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
         <h2 className="text-2xl font-black text-white mb-2">App Locked</h2>
         <p className="text-gray-400 text-sm mb-8">Enter your 4-digit PIN to secure your session.</p>
 
-        <div className="flex gap-4 mb-10">
+        <motion.div animate={pinErrorShake ? { x: [-10, 10, -10, 10, 0] } : {}} transition={{ duration: 0.4 }} className="flex gap-4 mb-10">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className={`w-4 h-4 rounded-full border-2 transition-colors ${pin.length > i ? 'bg-payae-accent border-payae-accent shadow-[0_0_15px_rgba(0,229,255,0.6)]' : 'border-white/20'}`} />
+            <div 
+              key={i} 
+              className={`w-4 h-4 rounded-full border-2 transition-colors ${
+                pinErrorShake ? 'border-red-500 bg-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.6)]' : 
+                pin.length > i ? 'bg-payae-accent border-payae-accent shadow-[0_0_15px_rgba(0,229,255,0.6)]' : 
+                'border-white/20'
+              }`} 
+            />
           ))}
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-3 gap-4 md:gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
