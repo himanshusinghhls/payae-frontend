@@ -3,15 +3,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
 import AppLayout from "../components/layout/AppLayout";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, TrendingUp, Coins, Loader2, PieChart, ArrowDownToLine, X } from "lucide-react";
-import toast from "react-hot-toast";
+import { Wallet, TrendingUp, Coins, Loader2, PieChart, ArrowDownToLine, X, Building } from "lucide-react";
+import toast from "react-hot-toast"
+type AssetType = "SAVINGS" | "MF" | "GOLD";
 
 export default function Portfolio() {
   const queryClient = useQueryClient();
   const { data: rawTransactions, isLoading, isError } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
-  
+
   const [showWithdraw, setShowWithdraw] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState(100);
+  const [selectedAsset, setSelectedAsset] = useState<AssetType>("SAVINGS");
+  const [withdrawAmount, setWithdrawAmount] = useState(1);
 
   const { calcSavings, calcMf, calcGold } = useMemo(() => {
     let s = 0, m = 0, g = 0;
@@ -28,14 +30,16 @@ export default function Portfolio() {
 
   const totalWealth = calcSavings + calcMf + calcGold;
   const safeGoldGrams = calcGold > 0 ? calcGold / 7500 : 0;
+  const maxAmount = selectedAsset === "SAVINGS" ? calcSavings : selectedAsset === "MF" ? calcMf : calcGold;
 
   const withdrawMutation = useMutation({
     mutationFn: async () => {
-      await api.post("/api/users/topup", { amount: withdrawAmount });
+      await api.post("/api/users/topup", { amount: withdrawAmount, assetType: selectedAsset });
     },
     onSuccess: () => {
-      toast.success(`Successfully liquidated ₹${withdrawAmount}`);
+      toast.success(`Successfully liquidated ₹${withdrawAmount} from ${selectedAsset}!`);
       setShowWithdraw(false);
+      setWithdrawAmount(1);
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['ledger'] });
     }
@@ -54,20 +58,37 @@ export default function Portfolio() {
         {showWithdraw && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowWithdraw(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-payae-card border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md z-10 text-center">
-              <button onClick={() => setShowWithdraw(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
-              <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><ArrowDownToLine className="w-8 h-8" /></div>
-              <h3 className="text-2xl font-bold text-white mb-2">Liquidate Assets</h3>
-              <p className="text-gray-400 text-sm mb-6">Withdraw portfolio funds back to your Virtual Balance instantly.</p>
+            <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-payae-card border border-white/10 p-6 md:p-8 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] w-full max-w-md z-10 text-center backdrop-blur-2xl">
+              <button onClick={() => setShowWithdraw(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white bg-white/5 rounded-full p-2"><X size={20}/></button>
               
-              <div className="mb-6">
-                <div className="flex justify-between text-sm text-gray-400 mb-2"><span>Amount</span><span className="text-white font-bold">₹{withdrawAmount}</span></div>
-                <input type="range" min="100" max={Math.max(totalWealth, 100)} step="10" value={withdrawAmount} onChange={(e) => setWithdrawAmount(Number(e.target.value))} className="w-full accent-red-500" />
-                <div className="text-right text-[10px] text-gray-500 mt-1">Max: ₹{totalWealth.toFixed(0)}</div>
+              <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4"><ArrowDownToLine className="w-8 h-8" /></div>
+              <h3 className="text-2xl font-bold text-white mb-2">Liquidate Asset</h3>
+              <p className="text-gray-400 text-sm mb-6">Select which specific asset you want to withdraw back to your Virtual Balance.</p>
+              
+              <div className="flex bg-black/50 p-1.5 rounded-xl border border-white/10 mb-6 relative">
+                <button onClick={() => { setSelectedAsset("SAVINGS"); setWithdrawAmount(1); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all z-10 ${selectedAsset === "SAVINGS" ? 'text-black' : 'text-gray-400 hover:text-white'}`}>Savings</button>
+                <button onClick={() => { setSelectedAsset("MF"); setWithdrawAmount(1); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all z-10 ${selectedAsset === "MF" ? 'text-black' : 'text-gray-400 hover:text-white'}`}>Funds</button>
+                <button onClick={() => { setSelectedAsset("GOLD"); setWithdrawAmount(1); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all z-10 ${selectedAsset === "GOLD" ? 'text-black' : 'text-gray-400 hover:text-white'}`}>Gold</button>
+                <div className="absolute top-1.5 bottom-1.5 w-[calc(33.33%-4px)] transition-transform duration-300 ease-out z-0 pointer-events-none"
+                     style={{ transform: `translateX(${selectedAsset === 'SAVINGS' ? '0%' : selectedAsset === 'MF' ? '100%' : '200%'})` }}>
+                  <div className={`w-full h-full rounded-lg ${selectedAsset === 'SAVINGS' ? 'bg-[#00E5FF]' : selectedAsset === 'MF' ? 'bg-[#00FF94]' : 'bg-[#f58220]'}`} />
+                </div>
+              </div>
+              
+              <div className="mb-6 bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div className="flex justify-between text-sm text-gray-400 mb-3"><span className="uppercase tracking-widest font-bold text-xs">Amount</span><span className="text-white font-bold text-lg">₹{withdrawAmount}</span></div>
+                {maxAmount > 0 ? (
+                  <>
+                    <input type="range" min="1" max={Math.max(maxAmount, 1)} step="1" value={withdrawAmount} onChange={(e) => setWithdrawAmount(Number(e.target.value))} className={`w-full ${selectedAsset === 'SAVINGS' ? 'accent-[#00E5FF]' : selectedAsset === 'MF' ? 'accent-[#00FF94]' : 'accent-[#f58220]'}`} />
+                    <div className="flex justify-between text-[10px] text-gray-500 mt-2 font-bold"><span>₹1</span><span>Max: ₹{maxAmount.toFixed(0)}</span></div>
+                  </>
+                ) : (
+                  <p className="text-xs text-red-400 font-semibold py-2">Insufficient balance in this asset.</p>
+                )}
               </div>
 
-              <button onClick={() => withdrawMutation.mutate()} disabled={withdrawMutation.isPending || totalWealth < withdrawAmount} className="w-full bg-red-500 text-white font-bold py-3 rounded-xl disabled:opacity-50 flex justify-center items-center">
-                {withdrawMutation.isPending ? <Loader2 className="animate-spin" /> : `Withdraw ₹${withdrawAmount}`}
+              <button onClick={() => withdrawMutation.mutate()} disabled={withdrawMutation.isPending || maxAmount <= 0 || withdrawAmount > maxAmount} className="w-full bg-red-500 text-white font-bold py-4 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center hover:bg-red-600 transition-colors shadow-lg">
+                {withdrawMutation.isPending ? <Loader2 className="animate-spin" /> : `Liquidate ₹${withdrawAmount}`}
               </button>
             </motion.div>
           </div>
@@ -81,8 +102,8 @@ export default function Portfolio() {
             <p className="text-sm text-gray-400 mt-1">Deep dive into your exact asset distribution.</p>
           </div>
           <div className="flex gap-3 items-center">
-            <button onClick={() => setShowWithdraw(true)} className="px-4 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm font-bold hover:bg-red-500 hover:text-white transition-colors flex items-center gap-2">
-              <ArrowDownToLine className="w-4 h-4"/> Liquidate
+            <button onClick={() => setShowWithdraw(true)} className="px-5 py-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm font-bold hover:bg-red-500 hover:text-white transition-all shadow-lg flex items-center gap-2">
+              <ArrowDownToLine className="w-4 h-4"/> Liquidate Asset
             </button>
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-black/40 backdrop-blur-md px-5 py-2.5 rounded-xl border border-white/10 text-center shadow-lg">
               <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-0.5">Total Value</p>
@@ -108,7 +129,7 @@ export default function Portfolio() {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-gradient-to-br from-[#00FF94]/10 to-black/40 border border-[#00FF94]/30 p-5 rounded-2xl flex flex-col justify-between shadow-lg">
-            <div className="flex items-center justify-between mb-6"><div className="bg-[#00FF94]/20 p-2.5 rounded-lg"><TrendingUp className="text-[#00FF94] w-5 h-5" /></div><span className="text-[#00FF94] font-bold text-[10px] uppercase tracking-widest">Invested</span></div>
+            <div className="flex items-center justify-between mb-6"><div className="bg-[#00FF94]/20 p-2.5 rounded-lg"><Building className="text-[#00FF94] w-5 h-5" /></div><span className="text-[#00FF94] font-bold text-[10px] uppercase tracking-widest">Invested</span></div>
             <div><h3 className="text-gray-400 font-bold uppercase tracking-wider text-[11px] mb-1">Mutual Funds</h3><p className="text-3xl font-black text-white">₹{calcMf.toFixed(2)}</p></div>
           </motion.div>
 
