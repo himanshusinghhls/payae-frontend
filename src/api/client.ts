@@ -18,9 +18,21 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+let failedRequests = 0;
+
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    failedRequests = 0;
+    return response;
+  },
   (error) => {
+    if (!error.response || error.response.status === 502 || error.response.status === 503) {
+      failedRequests++;
+      if (failedRequests >= 2) {
+        window.location.reload(); 
+      }
+    }
+
     const isAuthRoute = error.config?.url?.includes('/auth/');
     if (error.response && error.response.status === 401 && !isAuthRoute) {
       localStorage.removeItem("token");

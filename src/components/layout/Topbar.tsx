@@ -45,16 +45,19 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const actualName = profile?.name || displayEmail.split('@')[0];
   const formattedName = actualName.charAt(0).toUpperCase() + actualName.slice(1);
   const upiString = `upi://pay?pa=${displayEmail}&pn=${encodeURIComponent(actualName)}`;
-
   const recentActivity = (transactions || []).filter((t: any) => t.type?.includes("PAYMENT")).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 3);
   const unreadCount = recentActivity.length > 0 ? recentActivity.length : 0;
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
       const payload: any = {};
-      if (editName) payload.name = editName;
+      if (editName && editName !== actualName) payload.name = editName;
       if (editPassword) payload.password = editPassword;
-      await api.put("/api/users/profile", payload);
+      
+      if (Object.keys(payload).length > 0) {
+        await api.put("/api/users/profile", payload);
+      }
+      return true;
     },
     onSuccess: () => {
       localStorage.setItem("userPin", editPin);
@@ -63,7 +66,10 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
       setShowEditProfile(false);
       setEditPassword("");
     },
-    onError: () => toast.error("Failed to update profile.")
+    onError: (error: any) => {
+      const errorMsg = error.response?.data?.message || "Failed to update profile.";
+      toast.error(errorMsg);
+    }
   });
 
   useEffect(() => {

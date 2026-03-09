@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Lock, Delete, ArrowRight } from "lucide-react";
+import { Lock, Delete, Info } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
@@ -45,18 +45,27 @@ export default function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
 
         <div className="grid grid-cols-3 gap-4 md:gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-            <button key={num} onClick={() => handlePress(num.toString())} className="w-16 h-16 rounded-full bg-white/5 border border-white/10 text-xl font-bold text-white hover:bg-white/20 transition-colors flex items-center justify-center">
+            <button key={num} onClick={() => handlePress(num.toString())} className="w-16 h-16 rounded-full bg-white/5 border border-white/10 text-xl font-bold text-white hover:bg-white/20 transition-colors flex items-center justify-center shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
               {num}
             </button>
           ))}
           <div /> 
-          <button onClick={() => handlePress("0")} className="w-16 h-16 rounded-full bg-white/5 border border-white/10 text-xl font-bold text-white hover:bg-white/20 transition-colors flex items-center justify-center">
+          <button onClick={() => handlePress("0")} className="w-16 h-16 rounded-full bg-white/5 border border-white/10 text-xl font-bold text-white hover:bg-white/20 transition-colors flex items-center justify-center shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
             0
           </button>
-          <button onClick={handleDelete} className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-colors flex items-center justify-center">
+          <button onClick={handleDelete} className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-colors flex items-center justify-center shadow-lg">
             <Delete className="w-6 h-6" />
           </button>
         </div>
+
+        <div className="mt-10 flex flex-col items-center bg-white/5 border border-white/10 px-5 py-3 rounded-2xl max-w-xs text-center">
+           <div className="flex items-center gap-2 mb-1">
+             <Info className="w-3.5 h-3.5 text-payae-accent" />
+             <span className="text-gray-300 text-xs font-semibold">Default PIN is <strong className="text-payae-accent tracking-widest ml-1 text-sm">0000</strong></span>
+           </div>
+           <p className="text-[10px] text-gray-500 font-medium">You can change this anytime from your Profile Settings.</p>
+        </div>
+
       </motion.div>
     </div>
   );
