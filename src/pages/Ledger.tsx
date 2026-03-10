@@ -40,7 +40,16 @@ export default function Ledger() {
       if (isFailed || isReceived) return { ...payment, isFailed, isReceived, isLiquidation, linkedRoundups: [], totalRoundupAmount: 0, totalCharge: payment.amount };
 
       const pTime = new Date(payment.timestamp).getTime();
-      const linkedRoundups = availableInvestments.filter((r: any) => { const rTime = new Date(r.timestamp).getTime(); return rTime >= pTime && rTime <= pTime + 10000; });
+      
+      let linkedRoundups = availableInvestments.filter((r: any) => { 
+        const rTime = new Date(r.timestamp).getTime(); 
+        return rTime >= pTime && rTime <= pTime + 10000; 
+      });
+      const specificInvestments = linkedRoundups.filter((r: any) => r.type === "INVESTMENT");
+      if (specificInvestments.length > 0) {
+          linkedRoundups = specificInvestments;
+      }
+
       availableInvestments = availableInvestments.filter((r: any) => !linkedRoundups.includes(r));
       const totalRoundupAmount = linkedRoundups.reduce((sum: number, r: any) => sum + r.amount, 0);
 

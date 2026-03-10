@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Lock, Delete, Info } from "lucide-react";
 import toast from "react-hot-toast";
@@ -6,7 +6,15 @@ import toast from "react-hot-toast";
 export default function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
   const [pin, setPin] = useState("");
   const [pinErrorShake, setPinErrorShake] = useState(false); 
-  const correctPin = localStorage.getItem("userPin") || "0000";
+  const [correctPin, setCorrectPin] = useState("0000");
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      const userPinKey = `userPin_${user.email}`;
+      setCorrectPin(localStorage.getItem(userPinKey) || "0000");
+    }
+  }, []);
 
   const handlePress = (num: string) => {
     if (pin.length < 4) setPin(prev => prev + num);

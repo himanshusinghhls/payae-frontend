@@ -34,10 +34,6 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const [showCommandCenter, setShowCommandCenter] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const [editName, setEditName] = useState("");
-  const [editPassword, setEditPassword] = useState("");
-  const [editPin, setEditPin] = useState(localStorage.getItem("userPin") || "0000");
-
   const { data: profile } = useQuery({ queryKey: ['userProfile'], queryFn: fetchProfile, staleTime: 300000 });
   const { data: transactions } = useQuery({ queryKey: ['ledger'], queryFn: fetchTransactions });
 
@@ -47,12 +43,24 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const upiString = `upi://pay?pa=${displayEmail}&pn=${encodeURIComponent(actualName)}`;
   const recentActivity = (transactions || []).filter((t: any) => t.type?.includes("PAYMENT")).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 3);
   const unreadCount = recentActivity.length > 0 ? recentActivity.length : 0;
+  const [editName, setEditName] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const userPinKey = `userPin_${displayEmail}`;
+  const [editPin, setEditPin] = useState("0000");
+
+  useEffect(() => {
+    if (profile?.pin) {
+      setEditPin(profile.pin);
+      localStorage.setItem(userPinKey, profile.pin);
+    }
+  }, [profile, userPinKey]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
       const payload: any = {};
       if (editName && editName !== actualName) payload.name = editName;
       if (editPassword) payload.password = editPassword;
+      if (editPin && editPin !== profile?.pin) payload.pin = editPin; 
       
       if (Object.keys(payload).length > 0) {
         await api.put("/api/users/profile", payload);
@@ -60,7 +68,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
       return true;
     },
     onSuccess: () => {
-      localStorage.setItem("userPin", editPin);
+      localStorage.setItem(userPinKey, editPin);
       toast.success("Profile & Security updated!");
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       setShowEditProfile(false);
