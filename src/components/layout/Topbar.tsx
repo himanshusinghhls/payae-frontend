@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, Search, LogOut, User as UserIcon, Menu, ArrowUpRight, ArrowDownLeft, X, Lock, Loader2, CheckCircle, QrCode, KeyRound, ShieldCheck, ArrowRight } from "lucide-react";
+import { Bell, Search, LogOut, User as UserIcon, Menu, ArrowUpRight, ArrowDownLeft, X, QrCode, Settings as SettingsIcon, ArrowRight } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import api from "../../api/client";
-import toast from "react-hot-toast";
-import { Settings as SettingsIcon } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 const fetchProfile = async () => { const response = await api.get("/api/users/me"); return response.data; };
@@ -23,62 +21,27 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const queryClient = useQueryClient();
-
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showEditProfile, setShowEditProfile] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [showCommandCenter, setShowCommandCenter] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-
   const { data: profile } = useQuery({ queryKey: ['userProfile'], queryFn: fetchProfile, staleTime: 300000 });
   const { data: transactions } = useQuery({ queryKey: ['ledger'], queryFn: fetchTransactions });
-
   const displayEmail = profile?.email || "user@payae.com";
   const actualName = profile?.name || displayEmail.split('@')[0];
   const formattedName = actualName.charAt(0).toUpperCase() + actualName.slice(1);
   const upiString = `upi://pay?pa=${displayEmail}&pn=${encodeURIComponent(actualName)}`;
   const recentActivity = (transactions || []).filter((t: any) => t.type?.includes("PAYMENT")).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 3);
   const unreadCount = recentActivity.length > 0 ? recentActivity.length : 0;
-  const [editName, setEditName] = useState("");
-  const [editPassword, setEditPassword] = useState("");
-  const userPinKey = `userPin_${displayEmail}`;
-  const [editPin, setEditPin] = useState("0000");
 
+  const userPinKey = `userPin_${displayEmail}`;
   useEffect(() => {
     if (profile?.pin) {
-      setEditPin(profile.pin);
       localStorage.setItem(userPinKey, profile.pin);
     }
   }, [profile, userPinKey]);
-
-  const updateProfileMutation = useMutation({
-    mutationFn: async () => {
-      const payload: any = {};
-      if (editName && editName !== actualName) payload.name = editName;
-      if (editPassword) payload.password = editPassword;
-      if (editPin && editPin !== profile?.pin) payload.pin = editPin; 
-      
-      if (Object.keys(payload).length > 0) {
-        await api.put("/api/users/profile", payload);
-      }
-      return true;
-    },
-    onSuccess: () => {
-      localStorage.setItem(userPinKey, editPin);
-      toast.success("Profile & Security updated!");
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-      setShowEditProfile(false);
-      setEditPassword("");
-    },
-    onError: (error: any) => {
-      const errorMsg = error.response?.data?.message || "Failed to update profile.";
-      toast.error(errorMsg);
-    }
-  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -107,7 +70,8 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
       case '/portfolio': return { title: "Wealth Portfolio", sub: "Analyze your asset distribution." };
       case '/payment': return { title: "Secure Checkout", sub: "Send money and auto-invest." };
       case '/ledger': return { title: "Smart Ledger", sub: "Your transaction history." };
-      case '/settings': return { title: "Preferences", sub: "Manage your allocation rules." };
+      case '/settings': return { title: "Allocation Rules", sub: "Manage your investment splits." };
+      case '/profile': return { title: "Security & Profile", sub: "Manage your credentials and PIN." };
       default: return { title: "PayAE Dashboard", sub: "Manage your finances." };
     }
   };
@@ -124,16 +88,12 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
 
         <div className="flex items-center gap-4 md:gap-6 relative">
-          
           <div className="relative hidden lg:block" ref={searchRef}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
               <input 
-                type="text" 
-                placeholder="Quick Actions (Cmd+K)" 
-                value={searchQuery}
-                onFocus={() => setShowCommandCenter(true)}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                type="text" placeholder="Quick Actions (Cmd+K)" value={searchQuery}
+                onFocus={() => setShowCommandCenter(true)} onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-black/40 border border-payae-border rounded-full py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-payae-accent focus:bg-white/5 w-64 transition-all" 
               />
             </div>
@@ -143,11 +103,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full mt-2 w-full bg-black/90 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-2 z-50 overflow-hidden">
                   {filteredActions.length > 0 ? (
                     filteredActions.map((action) => (
-                      <button 
-                        key={action.id} 
-                        onClick={() => executeAction(action.path)}
-                        className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-white/10 text-sm text-gray-300 hover:text-white transition-colors flex items-center justify-between group"
-                      >
+                      <button key={action.id} onClick={() => executeAction(action.path)} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-white/10 text-sm text-gray-300 hover:text-white transition-colors flex items-center justify-between group">
                         {action.name}
                         <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 text-payae-accent transition-opacity" />
                       </button>
@@ -201,8 +157,8 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                   <button onClick={() => { setShowProfileMenu(false); setShowQrModal(true); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-payae-accent hover:bg-payae-accent/10 rounded-lg transition-colors font-semibold">
                     <QrCode className="w-4 h-4" /> Display My QR
                   </button>
-                  <button onClick={() => { setEditName(actualName); setShowProfileMenu(false); setShowEditProfile(true); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-                    <UserIcon className="w-4 h-4" /> Edit Profile
+                  <button onClick={() => { setShowProfileMenu(false); navigate('/profile'); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+                    <UserIcon className="w-4 h-4" /> Security & Profile
                   </button>
                   <button onClick={() => { setShowProfileMenu(false); navigate('/settings'); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                     <SettingsIcon className="w-4 h-4" /> Allocation Rules
@@ -230,56 +186,6 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 <QRCodeSVG value={upiString} size={200} level="H" includeMargin={false} />
               </div>
               <p className="text-gray-400 text-xs">Scan using any PayAE camera to directly auto-fill payment details.</p>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showEditProfile && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowEditProfile(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-black/80 border border-white/10 p-6 rounded-3xl shadow-2xl w-full max-w-md z-10 backdrop-blur-xl">
-              <button onClick={() => setShowEditProfile(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
-              <h3 className="text-xl font-bold text-white mb-6">Security & Profile</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2 block">Display Name</label>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:border-payae-accent outline-none" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2 block">App Lock PIN (4-Digits)</label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-                    <input type="text" maxLength={4} value={editPin} onChange={(e) => setEditPin(e.target.value.replace(/[^0-9]/g, ''))} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:border-payae-accent outline-none tracking-widest font-bold" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2 block">New Password (Optional)</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-                    <input type="password" placeholder="Leave blank to keep current" value={editPassword} onChange={(e) => setEditPassword(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-white focus:border-payae-accent outline-none" />
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <label className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-2 flex items-center gap-1">Verified Identity <ShieldCheck className="w-3 h-3 text-payae-success"/></label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 w-4 h-4" />
-                    <input type="email" value={displayEmail} disabled className="w-full bg-black/60 border border-white/5 rounded-xl py-3 pl-10 pr-4 text-gray-500 cursor-not-allowed shadow-inner font-semibold" />
-                  </div>
-                </div>
-
-                <button onClick={() => updateProfileMutation.mutate()} disabled={updateProfileMutation.isPending || editPin.length !== 4} className="w-full mt-4 bg-gradient-to-r from-payae-accent to-blue-500 text-black font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50">
-                  {updateProfileMutation.isPending ? <Loader2 className="animate-spin w-5 h-5"/> : <><CheckCircle className="w-5 h-5"/> Save Changes</>}
-                </button>
-              </div>
             </motion.div>
           </div>
         )}

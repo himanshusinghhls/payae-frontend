@@ -21,19 +21,29 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const { data: dashData, isLoading: isDashLoading } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard, refetchInterval: 10000 });
   const { data: rawTransactions, isLoading: isLedgerLoading } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
-  
+  const { data: profile } = useQuery({ queryKey: ['userProfile'], queryFn: async () => { const res = await api.get("/api/users/me"); return res.data; } });
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number>(1000);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
-    const hasSeenTour = localStorage.getItem("hasSeenTour");
-    if (!hasSeenTour) {
+    if (profile && profile.hasCompletedOnboarding === "false") {
       setShowOnboarding(true);
-      localStorage.setItem("hasSeenTour", "true");
     }
-  }, []);
+  }, [profile]);
+
+  const completeOnboardingMutation = useMutation({
+    mutationFn: async () => await api.post("/api/users/onboarding/complete"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    }
+  });
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    completeOnboardingMutation.mutate();
+  };
 
   const topUpMutation = useMutation({
     mutationFn: async () => await api.post("/api/users/topup", { amount: topUpAmount }),
@@ -108,7 +118,7 @@ export default function Dashboard() {
   return (
     <AppLayout>
       {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} numberOfPieces={500} colors={['#00E5FF', '#00FF94', '#f58220']} className="z-[100]" />}
-      {showOnboarding && <OnboardingTour onComplete={() => setShowOnboarding(false)} />}
+      {showOnboarding && <OnboardingTour onComplete={handleOnboardingComplete} />}
 
       <div className="max-w-7xl mx-auto space-y-6 relative mt-2">
         <AnimatePresence>
@@ -201,19 +211,9 @@ export default function Dashboard() {
                        key={coin}
                        initial={{ y: -800, opacity: 0, rotate: (i % 2 === 0 ? 1 : -1) * (Math.random() * 360 + 180) }}
                        animate={{ y: 0, opacity: 1, rotate: Math.random() * 16 - 8 }}
-                       transition={{ 
-                         type: "spring", 
-                         stiffness: 400,
-                         damping: 15,
-                         mass: 0.8,
-                         delay: i * 0.015
-                       }}
+                       transition={{ type: "spring", stiffness: 400, damping: 15, mass: 0.8, delay: i * 0.015 }}
                        className="absolute w-7 h-2.5 bg-gradient-to-b from-yellow-300 to-yellow-600 border border-yellow-700 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-20"
-                       style={{ 
-                         bottom: `${boundedBottom}px`, 
-                         left: `${boundedLeft}px`,
-                         zIndex: i 
-                       }}
+                       style={{ bottom: `${boundedBottom}px`, left: `${boundedLeft}px`, zIndex: i }}
                      />
                    );
                  })}

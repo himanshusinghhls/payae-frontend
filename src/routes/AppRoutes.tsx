@@ -14,6 +14,7 @@ import Privacy from "../pages/Privacy";
 import Terms from "../pages/Terms";
 import ProtectedRoute from "./ProtectedRoute";
 import Maintenance from "../pages/Maintenance";
+import Profile from "../pages/Profile";
 
 const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
@@ -43,6 +44,7 @@ export default function AppRoutes() {
         <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
