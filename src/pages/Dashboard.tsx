@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import AppLayout from "../components/layout/AppLayout";
 import StatCard from "../components/ui/StatCard";
 import AnimatedNumber from "../components/ui/AnimatedNumber";
-import { Plus, Loader2, X, Target, Activity } from "lucide-react";
+import { Plus, Loader2, X, Target, Activity, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Confetti from "react-confetti";
@@ -31,7 +31,7 @@ export default function Dashboard() {
   const { data: rawTransactions, isLoading: isLedgerLoading } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
   const { data: profile } = useQuery({ queryKey: ['userProfile'], queryFn: async () => { const res = await api.get("/api/users/me"); return res.data; } });
   const [showTopUpModal, setShowTopUpModal] = useState(false);
-  const [topUpAmount, setTopUpAmount] = useState<number>(1000);
+  const [topUpAmount, setTopUpAmount] = useState<number | "">("");
   const [showConfetti, setShowConfetti] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isTopUpLoading, setIsTopUpLoading] = useState(false);
@@ -55,17 +55,18 @@ export default function Dashboard() {
   };
 
   const handleRazorpayTopUp = async () => {
+    if (!topUpAmount || Number(topUpAmount) <= 0) return;
     try {
       setIsTopUpLoading(true);
       const isLoaded = await loadRazorpayScript();
       if (!isLoaded) throw new Error("Razorpay SDK failed to load");
       
-      const orderRes = await api.post("/api/payments/order", { amount: topUpAmount });
+      const orderRes = await api.post("/api/payments/order", { amount: Number(topUpAmount) });
       let actualOrderId = typeof orderRes.data === 'string' ? JSON.parse(orderRes.data).id : orderRes.data.id || orderRes.data;
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY,
-        amount: topUpAmount * 100,
+        amount: Number(topUpAmount) * 100,
         currency: "INR",
         name: "PayAE Top-Up",
         description: "Add money to Virtual Wallet",
@@ -77,10 +78,11 @@ export default function Dashboard() {
               orderId: response.razorpay_order_id,
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
-              amount: topUpAmount
+              amount: Number(topUpAmount)
             });
             toast.success(`₹${topUpAmount} added to your virtual wallet!`);
             setShowTopUpModal(false);
+            setTopUpAmount("");
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             queryClient.invalidateQueries({ queryKey: ['ledger'] });
           } catch (err) {
@@ -114,32 +116,26 @@ export default function Dashboard() {
     return { calcSavings: s, calcMf: m, calcGold: g };
   }, [rawTransactions]);
 
-  const heatmapDays = useMemo(() => {
+  const weeklyData = useMemo(() => {
     if (!rawTransactions) return [];
-    const days = [];
-    for (let i = 34; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const amount = rawTransactions
-         .filter((tx: any) => tx.timestamp.startsWith(dateStr) && (tx.type === 'ROUND_UP' || tx.type === 'INVESTMENT'))
-         .reduce((sum: number, tx: any) => sum + tx.amount, 0);
-      days.push({ 
-          date: dateStr, 
-          amount, 
-          label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
-      });
-    }
+    const days = Array.from({length: 7}, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (6 - i));
+      return { 
+        dateString: d.toISOString().split('T')[0], 
+        label: d.toLocaleDateString('en-US', { weekday: 'short' }), 
+        total: 0 
+      };
+    });
+    rawTransactions.forEach((tx: any) => {
+      if (tx.type === "ROUND_UP" || tx.type === "INVESTMENT") {
+        const dayMatch = days.find(d => d.dateString === tx.timestamp.split('T')[0]);
+        if (dayMatch) dayMatch.total += tx.amount;
+      }
+    });
     return days;
   }, [rawTransactions]);
 
-  const getHeatmapColor = (amount: number) => {
-    if (amount === 0) return 'bg-white/5 border-white/5';
-    if (amount < 20) return 'bg-[#0e4429] border-[#0e4429]';
-    if (amount < 50) return 'bg-[#006d32] border-[#006d32]';
-    if (amount < 100) return 'bg-[#26a641] border-[#26a641]';
-    return 'bg-[#39d353] border-[#39d353] shadow-[0_0_10px_rgba(57,211,83,0.4)]';
-  };
+  const maxDailyValue = Math.max(...weeklyData.map(d => d.total), 50);
 
   const mouseX = useMotionValue(0); 
   const mouseY = useMotionValue(0);
@@ -160,7 +156,7 @@ export default function Dashboard() {
   const bankBalance = Number(dashData?.bankBalance || 0);
   const totalPayments = Number(dashData?.totalInvested || dashData?.totalPayments || 0);
   const totalWealth = calcSavings + calcMf + calcGold;
-  const goalTarget = Number(profile?.wealthGoal) || 2000;
+  const goalTarget = Number(profile?.wealthGoal) || 50000;
   
   if (totalWealth >= goalTarget && !localStorage.getItem("milestoneGoal")) {
     setShowConfetti(true);
@@ -184,13 +180,29 @@ export default function Dashboard() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowTopUpModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
               <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-payae-card border border-white/10 p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md z-10">
                 <button onClick={() => setShowTopUpModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X size={20}/></button>
-                <h3 className="text-xl font-bold text-white mb-2">Top Up Wallet</h3>
-                <div className="mb-6 mt-4">
-                  <div className="flex justify-between text-sm text-gray-400 mb-2"><span>Amount</span><span className="text-white font-bold">₹{topUpAmount}</span></div>
-                  <input type="range" min="100" max="10000" step="100" value={topUpAmount} onChange={(e) => setTopUpAmount(Number(e.target.value))} className="w-full accent-payae-accent" />
+                <h3 className="text-xl font-bold text-white mb-6">Top Up Wallet</h3>
+                
+                <div className="relative mb-6">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-2xl font-bold">₹</span>
+                  <input 
+                    type="number" 
+                    placeholder="0"
+                    value={topUpAmount} 
+                    onChange={(e) => setTopUpAmount(e.target.value ? Number(e.target.value) : "")} 
+                    className="w-full bg-black/50 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white text-3xl font-black focus:border-payae-accent outline-none transition-colors" 
+                  />
                 </div>
-                <button onClick={handleRazorpayTopUp} disabled={isTopUpLoading} className="w-full bg-gradient-to-r from-payae-accent to-blue-500 text-black font-bold py-3 rounded-xl hover:opacity-90 transition-opacity">
-                  {isTopUpLoading ? <Loader2 className="animate-spin mx-auto" /> : `Pay ₹${topUpAmount}`}
+                
+                <div className="grid grid-cols-3 gap-3 mb-8">
+                  {[500, 1000, 5000].map(amt => (
+                    <button key={amt} onClick={() => setTopUpAmount(amt)} className="py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300 font-bold hover:bg-white/10 hover:text-white transition-colors">
+                      +₹{amt}
+                    </button>
+                  ))}
+                </div>
+
+                <button onClick={handleRazorpayTopUp} disabled={isTopUpLoading || !topUpAmount || Number(topUpAmount) <= 0} className="w-full bg-gradient-to-r from-payae-accent to-blue-500 text-black font-bold py-4 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50">
+                  {isTopUpLoading ? <Loader2 className="animate-spin mx-auto" /> : `Proceed to Pay`}
                 </button>
               </motion.div>
             </div>
@@ -216,33 +228,40 @@ export default function Dashboard() {
           <div style={{ perspective: "1000px" }} className="h-[320px] lg:col-span-2">
             <motion.div onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="bg-gradient-to-br from-black/60 to-black/90 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-2xl h-full flex flex-col justify-between relative cursor-crosshair">
               <div style={{ transform: "translateZ(30px)" }} className="flex flex-col h-full">
-                <div>
-                  <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2"><Activity className="w-5 h-5 text-[#39d353]" /> 35-Day Activity Heatmap</h2>
-                  <p className="text-gray-400 text-xs mb-4">Your auto-investment routing consistency.</p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2"><TrendingUp className="w-5 h-5 text-payae-accent" /> 7-Day Pulse</h2>
+                    <p className="text-gray-400 text-xs mb-4">Your recent auto-investment volume.</p>
+                  </div>
+                  <div className="text-right">
+                     <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">7d Total</p>
+                     <p className="text-xl font-black text-payae-accent">₹{weeklyData.reduce((a, b) => a + b.total, 0).toFixed(0)}</p>
+                  </div>
                 </div>
                 
-                <div className="mt-auto w-full overflow-x-auto pb-2 scrollbar-hide">
-                    <div className="grid grid-rows-7 grid-flow-col gap-2 w-max mx-auto px-4">
-                        {heatmapDays.map((day, idx) => (
-                           <div 
-                              key={idx} 
-                              className={`w-6 h-6 md:w-7 md:h-7 rounded-[4px] border transition-all ${getHeatmapColor(day.amount)} hover:ring-2 hover:ring-white group relative cursor-pointer`}
-                           >
-                              <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity bg-black border border-white/20 text-white text-[10px] whitespace-nowrap py-1 px-2 rounded-md bottom-full mb-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
-                                  {day.label}: {day.amount > 0 ? `₹${day.amount.toFixed(2)}` : 'No Activity'}
-                              </div>
-                           </div>
-                        ))}
-                    </div>
-                    <div className="flex items-center justify-end gap-2 mt-4 text-xs text-gray-500 font-semibold pr-4">
-                        Less
-                        <div className="w-3 h-3 rounded-[2px] bg-white/5 border border-white/5"></div>
-                        <div className="w-3 h-3 rounded-[2px] bg-[#0e4429] border-[#0e4429]"></div>
-                        <div className="w-3 h-3 rounded-[2px] bg-[#006d32] border-[#006d32]"></div>
-                        <div className="w-3 h-3 rounded-[2px] bg-[#26a641] border-[#26a641]"></div>
-                        <div className="w-3 h-3 rounded-[2px] bg-[#39d353] border-[#39d353]"></div>
-                        More
-                    </div>
+                <div className="flex items-end justify-between h-40 gap-2 mt-auto w-full px-2">
+                  {weeklyData.map((day, idx) => {
+                    const heightPct = Math.max((day.total / maxDailyValue) * 100, 5);
+                    const isToday = idx === 6;
+                    return (
+                      <div key={idx} className="flex flex-col items-center w-full group relative h-full justify-end">
+                        <div className="absolute opacity-0 group-hover:opacity-100 transition-all bg-black border border-white/20 text-white text-xs font-black py-1.5 px-3 rounded-lg -top-12 z-30 pointer-events-none shadow-[0_0_15px_rgba(0,0,0,0.8)]">
+                          ₹{day.total.toFixed(2)}
+                        </div>
+                        <div className="w-full max-w-[32px] h-full flex flex-col justify-end relative">
+                           <motion.div 
+                              initial={{ bottom: 0 }} animate={{ bottom: `${heightPct}%` }} transition={{ duration: 1.5, delay: idx * 0.1, type: "spring" }} 
+                              className={`absolute w-full h-1.5 rounded-t-sm z-20 ${day.total > 0 ? 'bg-payae-accent shadow-[0_0_10px_rgba(0,229,255,0.8)]' : 'bg-gray-700'}`} 
+                           />
+                           <motion.div 
+                              initial={{ height: 0 }} animate={{ height: `${heightPct}%` }} transition={{ duration: 1.5, delay: idx * 0.1, type: "spring" }} 
+                              className={`w-full rounded-sm opacity-80 ${day.total > 0 ? 'bg-gradient-to-t from-payae-accent/5 to-payae-accent/40' : 'bg-gray-800/30'}`} 
+                           />
+                        </div>
+                        <span className={`text-[10px] uppercase font-bold tracking-widest mt-3 ${isToday ? 'text-payae-accent drop-shadow-md' : 'text-gray-500'}`}>{day.label}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </motion.div>
