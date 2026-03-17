@@ -12,10 +12,8 @@ type AssetType = "SAVINGS" | "MF" | "GOLD";
 export default function Portfolio() {
   const queryClient = useQueryClient();
   const { data: rawTransactions, isLoading, isError } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
-
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetType>("SAVINGS");
-  
   const [withdrawAmount, setWithdrawAmount] = useState<number | "">("");
 
   const { calcSavings, calcMf, calcGold } = useMemo(() => {
@@ -23,7 +21,7 @@ export default function Portfolio() {
     (rawTransactions || []).forEach((tx: any) => {
       const asset = (tx.assetType || "SAVINGS").toUpperCase();
       
-      if (tx.type === "INVESTMENT" || tx.type === "ROUND_UP") {
+      if (tx.type === "INVESTMENT") {
         if (asset.includes("MF") || asset.includes("MUTUAL")) m += tx.amount;
         else if (asset.includes("GOLD")) g += tx.amount;
         else s += tx.amount;

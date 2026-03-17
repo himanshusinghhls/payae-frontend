@@ -118,6 +118,11 @@ export default function Profile() {
                  />
                  
                  <button onClick={handleUnlock} disabled={unlockPinInput.length !== 4} className="w-full bg-payae-accent text-black font-bold py-3 rounded-xl disabled:opacity-50 mb-3">Verify PIN</button>
+                 
+                 <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl text-center mb-4">
+                   <span className="text-gray-300 text-xs font-semibold">Default PIN is <strong className="text-payae-accent tracking-widest ml-1 text-sm">0000</strong></span>
+                 </div>
+                 
                  <button onClick={() => forgotPinMutation.mutate()} className="text-xs text-gray-400 hover:text-white underline">Forgot PIN?</button>
                  <button onClick={() => setShowUnlockModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white">✕</button>
               </motion.div>

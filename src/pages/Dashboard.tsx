@@ -85,6 +85,7 @@ export default function Dashboard() {
             setTopUpAmount("");
             queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             queryClient.invalidateQueries({ queryKey: ['ledger'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard_balance'] });
           } catch (err) {
             toast.error("Top-Up verification failed on our servers.");
           }
@@ -106,7 +107,7 @@ export default function Dashboard() {
   const { calcSavings, calcMf, calcGold } = useMemo(() => {
     let s = 0, m = 0, g = 0;
     (rawTransactions || []).forEach((tx: any) => {
-      if (tx.type === "INVESTMENT" || tx.type === "ROUND_UP") {
+      if (tx.type === "INVESTMENT") {
         const asset = (tx.assetType || "SAVINGS").toUpperCase();
         if (asset.includes("MF") || asset.includes("MUTUAL")) m += tx.amount;
         else if (asset.includes("GOLD")) g += tx.amount;
@@ -127,7 +128,7 @@ export default function Dashboard() {
       };
     });
     rawTransactions.forEach((tx: any) => {
-      if (tx.type === "ROUND_UP" || tx.type === "INVESTMENT") {
+      if (tx.type === "ROUND_UP") {
         const dayMatch = days.find(d => d.dateString === tx.timestamp.split('T')[0]);
         if (dayMatch) dayMatch.total += tx.amount;
       }

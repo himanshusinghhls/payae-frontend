@@ -7,6 +7,7 @@ export default function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
   const [pin, setPin] = useState("");
   const [pinErrorShake, setPinErrorShake] = useState(false); 
   const [correctPin, setCorrectPin] = useState("0000");
+
   useEffect(() => {
     const userStr = localStorage.getItem("user");
     if (userStr) {
@@ -24,22 +25,23 @@ export default function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
     setPin(prev => prev.slice(0, -1));
   };
 
-  const handleUnlock = () => {
-    if (pin === correctPin) {
-      onUnlock();
-    } else {
-      toast.error("Incorrect PIN");
-      setPinErrorShake(true);
-      setTimeout(() => {
-        setPinErrorShake(false);
-        setPin("");
-      }, 500);
+  useEffect(() => {
+    if (pin.length === 4) {
+      const timer = setTimeout(() => {
+        if (pin === correctPin) {
+          onUnlock();
+        } else {
+          toast.error("Incorrect PIN");
+          setPinErrorShake(true);
+          setTimeout(() => {
+            setPinErrorShake(false);
+            setPin("");
+          }, 500);
+        }
+      }, 200);
+      return () => clearTimeout(timer);
     }
-  };
-
-  if (pin.length === 4) {
-    setTimeout(handleUnlock, 200);
-  }
+  }, [pin, correctPin, onUnlock]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-2xl">

@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from "react";
-import { Bell, Search, LogOut, User as UserIcon, Menu, ArrowUpRight, ArrowDownLeft, X, QrCode, Settings as SettingsIcon, ArrowRight } from "lucide-react";
+import { Bell, Search, LogOut, User as UserIcon, Menu, ArrowUpRight, ArrowDownLeft, X, QrCode, Settings as SettingsIcon, ArrowRight, Wallet } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../api/client";
 import { QRCodeSVG } from "qrcode.react";
+import AnimatedNumber from "../../components/ui/AnimatedNumber";
 
 const fetchProfile = async () => { const response = await api.get("/api/users/me"); return response.data; };
 const fetchTransactions = async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; };
+const fetchDashboard = async () => { const res = await api.get("/api/dashboard"); return res.data?.data || res.data; };
 
 const QUICK_ACTIONS = [
   { id: 1, name: "Make a Payment", path: "/payment", keywords: ["send", "pay", "money", "transfer"] },
@@ -29,6 +31,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const searchRef = useRef<HTMLDivElement>(null);
   const { data: profile } = useQuery({ queryKey: ['userProfile'], queryFn: fetchProfile, staleTime: 300000 });
   const { data: transactions } = useQuery({ queryKey: ['ledger'], queryFn: fetchTransactions });
+  const { data: dashData } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
   const displayEmail = profile?.email || "user@payae.com";
   const actualName = profile?.name || displayEmail.split('@')[0];
   const formattedName = actualName.charAt(0).toUpperCase() + actualName.slice(1);
@@ -37,6 +40,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const upiString = `upi://pay?pa=${payaeId}&pn=${encodeURIComponent(actualName)}`;
   const recentActivity = (transactions || []).filter((t: any) => t.type?.includes("PAYMENT")).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 3);
   const unreadCount = recentActivity.length > 0 ? recentActivity.length : 0;
+  const bankBalance = dashData?.bankBalance || 0;
 
   const userPinKey = `userPin_${displayEmail}`;
   useEffect(() => {
@@ -116,6 +120,14 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-2 bg-white/5 hover:bg-white/10 transition-colors border border-white/10 px-4 py-2 rounded-full cursor-default">
+            <Wallet className="w-4 h-4 text-payae-accent" />
+            <span className="text-sm font-bold text-white flex items-center">
+              <span className="mr-0.5 text-gray-400">₹</span>
+              <AnimatedNumber value={bankBalance} />
+            </span>
           </div>
 
           <div className="relative">
