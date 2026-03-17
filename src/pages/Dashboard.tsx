@@ -68,22 +68,32 @@ export default function Dashboard() {
     return { calcSavings: s, calcMf: m, calcGold: g };
   }, [rawTransactions]);
 
-  const weeklyData = useMemo(() => {
+  const heatmapDays = useMemo(() => {
     if (!rawTransactions) return [];
-    const days = Array.from({length: 7}, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - (6 - i));
-      return { dateString: d.toISOString().split('T')[0], label: d.toLocaleDateString('en-US', { weekday: 'short' }), total: 0 };
-    });
-    rawTransactions.forEach((tx: any) => {
-      if (tx.type === "ROUND_UP") {
-        const dayMatch = days.find(d => d.dateString === tx.timestamp.split('T')[0]);
-        if (dayMatch) dayMatch.total += tx.amount;
-      }
-    });
+    const days = [];
+    for (let i = 83; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const amount = rawTransactions
+         .filter((tx: any) => tx.timestamp.startsWith(dateStr) && (tx.type === 'ROUND_UP' || tx.type === 'INVESTMENT'))
+         .reduce((sum: number, tx: any) => sum + tx.amount, 0);
+      days.push({ 
+          date: dateStr, 
+          amount, 
+          label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) 
+      });
+    }
     return days;
   }, [rawTransactions]);
 
-  const maxDailyValue = Math.max(...weeklyData.map(d => d.total), 50);
+  const getHeatmapColor = (amount: number) => {
+    if (amount === 0) return 'bg-white/5 border-white/5';
+    if (amount < 20) return 'bg-[#0e4429] border-[#0e4429]';
+    if (amount < 50) return 'bg-[#006d32] border-[#006d32]';
+    if (amount < 100) return 'bg-[#26a641] border-[#26a641]';
+    return 'bg-[#39d353] border-[#39d353] shadow-[0_0_10px_rgba(57,211,83,0.4)]'; // Bright green
+  };
 
   const mouseX = useMotionValue(0); 
   const mouseY = useMotionValue(0);
@@ -160,23 +170,32 @@ export default function Dashboard() {
             <motion.div onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="bg-gradient-to-br from-black/60 to-black/90 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-2xl h-full flex flex-col justify-between relative cursor-crosshair">
               <div style={{ transform: "translateZ(30px)" }} className="flex flex-col h-full">
                 <div>
-                  <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2"><Activity className="w-5 h-5 text-payae-success" /> 7-Day Wealth Engine</h2>
-                  <p className="text-gray-400 text-xs mb-4">Live automated investment routing.</p>
+                  <h2 className="text-lg font-bold mb-1 text-white flex items-center gap-2"><Activity className="w-5 h-5 text-[#39d353]" /> 12-Week Activity Heatmap</h2>
+                  <p className="text-gray-400 text-xs mb-4">Your auto-investment routing consistency.</p>
                 </div>
-                <div className="flex items-end justify-between h-40 gap-3 mt-auto w-full px-2">
-                  {weeklyData.map((day, idx) => {
-                    const heightPct = Math.max((day.total / maxDailyValue) * 100, 8);
-                    const isToday = idx === 6;
-                    return (
-                      <div key={idx} className="flex flex-col items-center w-full group relative">
-                        <div className="absolute opacity-0 group-hover:opacity-100 transition-all bg-black border border-white/20 text-white text-xs font-black py-1.5 px-3 rounded-lg -top-12 z-30 pointer-events-none shadow-[0_0_15px_rgba(0,0,0,0.8)]">₹{day.total.toFixed(2)}</div>
-                        <div className="w-full max-w-[20px] md:max-w-[28px] h-32 bg-black/50 rounded-full border border-white/5 relative overflow-hidden mb-3 flex flex-col justify-end shadow-inner">
-                           <motion.div initial={{ height: 0 }} animate={{ height: `${heightPct}%` }} transition={{ duration: 1.5, delay: idx * 0.1, type: "spring" }} className={`w-full rounded-full ${isToday ? 'bg-gradient-to-t from-payae-success/30 to-payae-success shadow-[0_0_10px_rgba(0,255,148,0.5)]' : 'bg-gradient-to-t from-blue-500/20 to-blue-400'}`} />
-                        </div>
-                        <span className={`text-[10px] uppercase font-bold tracking-widest ${isToday ? 'text-payae-success drop-shadow-md' : 'text-gray-400'}`}>{day.label}</span>
-                      </div>
-                    );
-                  })}
+                
+                <div className="mt-auto w-full overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="grid grid-rows-7 grid-flow-col gap-1.5 w-max mx-auto">
+                        {heatmapDays.map((day, idx) => (
+                           <div 
+                              key={idx} 
+                              className={`w-3.5 h-3.5 md:w-4 md:h-4 rounded-[3px] border transition-all ${getHeatmapColor(day.amount)} hover:ring-2 hover:ring-white group relative cursor-pointer`}
+                           >
+                              <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity bg-black border border-white/20 text-white text-[10px] whitespace-nowrap py-1 px-2 rounded-md bottom-full mb-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+                                  {day.label}: {day.amount > 0 ? `₹${day.amount.toFixed(2)}` : 'No Activity'}
+                              </div>
+                           </div>
+                        ))}
+                    </div>
+                    <div className="flex items-center justify-end gap-2 mt-4 text-xs text-gray-500 font-semibold pr-2">
+                        Less
+                        <div className="w-3 h-3 rounded-[2px] bg-white/5 border border-white/5"></div>
+                        <div className="w-3 h-3 rounded-[2px] bg-[#0e4429] border-[#0e4429]"></div>
+                        <div className="w-3 h-3 rounded-[2px] bg-[#006d32] border-[#006d32]"></div>
+                        <div className="w-3 h-3 rounded-[2px] bg-[#26a641] border-[#26a641]"></div>
+                        <div className="w-3 h-3 rounded-[2px] bg-[#39d353] border-[#39d353]"></div>
+                        More
+                    </div>
                 </div>
               </div>
             </motion.div>
@@ -217,7 +236,6 @@ export default function Dashboard() {
                      />
                    );
                  })}
-
                </div>
             </div>
           </div>

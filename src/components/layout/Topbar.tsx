@@ -32,7 +32,9 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const displayEmail = profile?.email || "user@payae.com";
   const actualName = profile?.name || displayEmail.split('@')[0];
   const formattedName = actualName.charAt(0).toUpperCase() + actualName.slice(1);
-  const upiString = `upi://pay?pa=${displayEmail}&pn=${encodeURIComponent(actualName)}`;
+  const usernamePrefix = displayEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+  const payaeId = `${usernamePrefix}@payae`;
+  const upiString = `upi://pay?pa=${payaeId}&pn=${encodeURIComponent(actualName)}`;
   const recentActivity = (transactions || []).filter((t: any) => t.type?.includes("PAYMENT")).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 3);
   const unreadCount = recentActivity.length > 0 ? recentActivity.length : 0;
 
@@ -152,7 +154,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-56 bg-black/80 border border-white/10 backdrop-blur-3xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-2 z-40 overflow-hidden">
                   <div className="p-3 border-b border-white/10 mb-2">
                     <p className="text-white font-bold text-sm truncate">{formattedName}</p>
-                    <p className="text-gray-400 text-xs truncate">{displayEmail}</p>
+                    <p className="text-gray-400 text-xs truncate">{payaeId}</p>
                   </div>
                   <button onClick={() => { setShowProfileMenu(false); setShowQrModal(true); }} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-payae-accent hover:bg-payae-accent/10 rounded-lg transition-colors font-semibold">
                     <QrCode className="w-4 h-4" /> Display My QR
@@ -181,7 +183,7 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
               <button onClick={() => setShowQrModal(false)} className="absolute top-6 right-6 text-gray-400 hover:text-white bg-white/5 p-2 rounded-full transition-colors"><X size={20}/></button>
               <div className="w-16 h-16 mx-auto bg-gradient-to-tr from-payae-accent to-blue-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(0,229,255,0.4)]"><QrCode className="text-black w-8 h-8" /></div>
               <h3 className="text-2xl font-black text-white mb-1">{formattedName}</h3>
-              <p className="text-payae-accent text-sm font-bold tracking-widest mb-8 truncate px-2">{displayEmail}</p>
+              <p className="text-payae-accent text-sm font-bold tracking-widest mb-8 truncate px-2">{payaeId}</p>
               <div className="bg-white p-4 rounded-3xl inline-block mx-auto shadow-2xl mb-6">
                 <QRCodeSVG value={upiString} size={200} level="H" includeMargin={false} />
               </div>
