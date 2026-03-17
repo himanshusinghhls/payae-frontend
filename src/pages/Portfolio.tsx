@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
 import AppLayout from "../components/layout/AppLayout";
@@ -9,23 +9,34 @@ import AnimatedNumber from "../components/ui/AnimatedNumber";
 
 type AssetType = "SAVINGS" | "MF" | "GOLD";
 
-const fetchDashboard = async () => {
-  const res = await api.get("/api/dashboard"); 
-  return res.data?.data || res.data; 
-};
-
 export default function Portfolio() {
   const queryClient = useQueryClient();
-  
-  const { data: dashData, isLoading, isError } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
-
+  const { data: rawTransactions, isLoading, isError } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetType>("SAVINGS");
   const [withdrawAmount, setWithdrawAmount] = useState<number | "">("");
 
-  const calcSavings = Number(dashData?.savingsBalance || 0);
-  const calcMf = Number(dashData?.mutualFundUnits || 0);
-  const calcGold = Number(dashData?.goldGrams || 0);
+  const { calcSavings, calcMf, calcGold } = useMemo(() => {
+    let s = 0, m = 0, g = 0;
+    (rawTransactions || []).forEach((tx: any) => {
+      if (tx.type === "INVESTMENT" || tx.type === "LIQUIDATION" || tx.type === "WITHDRAW_ASSET") {
+        const asset = (tx.assetType || "").toUpperCase(); 
+        
+        if (asset.includes("MF") || asset.includes("MUTUAL")) {
+          if (tx.type === "INVESTMENT") m += tx.amount;
+          else m -= tx.amount;
+        } else if (asset.includes("GOLD")) {
+          if (tx.type === "INVESTMENT") g += tx.amount;
+          else g -= tx.amount;
+        } else if (asset === "SAVINGS") {
+          if (tx.type === "INVESTMENT") s += tx.amount;
+          else s -= tx.amount;
+        }
+      }
+    });
+    
+    return { calcSavings: Math.max(0, s), calcMf: Math.max(0, m), calcGold: Math.max(0, g) };
+  }, [rawTransactions]);
 
   const totalWealth = calcSavings + calcMf + calcGold;
   const safeGoldGrams = calcGold > 0 ? calcGold / 7500 : 0;
@@ -42,6 +53,7 @@ export default function Portfolio() {
       setWithdrawAmount("");
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['ledger'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard_balance'] }); 
     },
     onError: (error: any) => {
       const msg = error.response?.data?.message || "Failed to liquidate asset. Check backend connection.";

@@ -104,9 +104,27 @@ export default function Dashboard() {
     }
   };
 
-  const calcSavings = Number(dashData?.savingsBalance || 0);
-  const calcMf = Number(dashData?.mutualFundUnits || 0);
-  const calcGold = Number(dashData?.goldGrams || 0);
+  const { calcSavings, calcMf, calcGold } = useMemo(() => {
+    let s = 0, m = 0, g = 0;
+    (rawTransactions || []).forEach((tx: any) => {
+      if (tx.type === "INVESTMENT" || tx.type === "LIQUIDATION" || tx.type === "WITHDRAW_ASSET") {
+        const asset = (tx.assetType || "").toUpperCase(); 
+        
+        if (asset.includes("MF") || asset.includes("MUTUAL")) {
+          if (tx.type === "INVESTMENT") m += tx.amount;
+          else m -= tx.amount;
+        } else if (asset.includes("GOLD")) {
+          if (tx.type === "INVESTMENT") g += tx.amount;
+          else g -= tx.amount;
+        } else if (asset === "SAVINGS") {
+          if (tx.type === "INVESTMENT") s += tx.amount;
+          else s -= tx.amount;
+        }
+      }
+    });
+    
+    return { calcSavings: Math.max(0, s), calcMf: Math.max(0, m), calcGold: Math.max(0, g) };
+  }, [rawTransactions]);
 
   const weeklyData = useMemo(() => {
     if (!rawTransactions) return [];
