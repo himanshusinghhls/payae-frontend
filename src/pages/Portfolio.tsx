@@ -15,7 +15,7 @@ export default function Portfolio() {
 
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetType>("SAVINGS");
-
+  
   const [withdrawAmount, setWithdrawAmount] = useState<number | "">("");
 
   const { calcSavings, calcMf, calcGold } = useMemo(() => {
@@ -146,9 +146,6 @@ export default function Portfolio() {
             <p className="text-sm text-gray-400 mt-1">Deep dive into your exact asset distribution.</p>
           </div>
           <div className="flex gap-3 items-center">
-            <button onClick={() => setShowWithdraw(true)} className="px-5 py-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm font-bold hover:bg-red-500 hover:text-white transition-all shadow-lg flex items-center gap-2">
-              <ArrowDownToLine className="w-4 h-4"/> Liquidate Asset
-            </button>
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-black/40 backdrop-blur-md px-6 py-2.5 rounded-xl border border-white/10 text-center shadow-lg">
               <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-0.5">Total Value</p>
               <p className="text-xl font-black text-payae-success flex items-center justify-center">
