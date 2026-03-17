@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
 import AppLayout from "../components/layout/AppLayout";
@@ -9,32 +9,23 @@ import AnimatedNumber from "../components/ui/AnimatedNumber";
 
 type AssetType = "SAVINGS" | "MF" | "GOLD";
 
+const fetchDashboard = async () => {
+  const res = await api.get("/api/dashboard"); 
+  return res.data?.data || res.data; 
+};
+
 export default function Portfolio() {
   const queryClient = useQueryClient();
-  const { data: rawTransactions, isLoading, isError } = useQuery({ queryKey: ['ledger'], queryFn: async () => { const res = await api.get("/api/transactions"); return Array.isArray(res.data) ? res.data : res.data?.data || []; }});
+  
+  const { data: dashData, isLoading, isError } = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboard });
+
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetType>("SAVINGS");
   const [withdrawAmount, setWithdrawAmount] = useState<number | "">("");
 
-  const { calcSavings, calcMf, calcGold } = useMemo(() => {
-    let s = 0, m = 0, g = 0;
-    (rawTransactions || []).forEach((tx: any) => {
-      const asset = (tx.assetType || "SAVINGS").toUpperCase();
-      
-      if (tx.type === "INVESTMENT") {
-        if (asset.includes("MF") || asset.includes("MUTUAL")) m += tx.amount;
-        else if (asset.includes("GOLD")) g += tx.amount;
-        else s += tx.amount;
-      } 
-      else if (tx.type === "LIQUIDATION" || tx.type === "WITHDRAW_ASSET") {
-        if (asset.includes("MF") || asset.includes("MUTUAL")) m -= tx.amount;
-        else if (asset.includes("GOLD")) g -= tx.amount;
-        else s -= tx.amount;
-      }
-    });
-    
-    return { calcSavings: Math.max(0, s), calcMf: Math.max(0, m), calcGold: Math.max(0, g) };
-  }, [rawTransactions]);
+  const calcSavings = Number(dashData?.savingsBalance || 0);
+  const calcMf = Number(dashData?.mutualFundUnits || 0);
+  const calcGold = Number(dashData?.goldGrams || 0);
 
   const totalWealth = calcSavings + calcMf + calcGold;
   const safeGoldGrams = calcGold > 0 ? calcGold / 7500 : 0;
@@ -51,7 +42,6 @@ export default function Portfolio() {
       setWithdrawAmount("");
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['ledger'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard_balance'] }); 
     },
     onError: (error: any) => {
       const msg = error.response?.data?.message || "Failed to liquidate asset. Check backend connection.";
