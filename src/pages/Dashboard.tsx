@@ -107,14 +107,20 @@ export default function Dashboard() {
   const { calcSavings, calcMf, calcGold } = useMemo(() => {
     let s = 0, m = 0, g = 0;
     (rawTransactions || []).forEach((tx: any) => {
+      const asset = (tx.assetType || "SAVINGS").toUpperCase();
       if (tx.type === "INVESTMENT") {
-        const asset = (tx.assetType || "SAVINGS").toUpperCase();
         if (asset.includes("MF") || asset.includes("MUTUAL")) m += tx.amount;
         else if (asset.includes("GOLD")) g += tx.amount;
         else s += tx.amount;
+      } 
+      else if (tx.type === "LIQUIDATION" || tx.type === "WITHDRAW_ASSET") {
+        if (asset.includes("MF") || asset.includes("MUTUAL")) m -= tx.amount;
+        else if (asset.includes("GOLD")) g -= tx.amount;
+        else s -= tx.amount;
       }
     });
-    return { calcSavings: s, calcMf: m, calcGold: g };
+    
+    return { calcSavings: Math.max(0, s), calcMf: Math.max(0, m), calcGold: Math.max(0, g) };
   }, [rawTransactions]);
 
   const weeklyData = useMemo(() => {
