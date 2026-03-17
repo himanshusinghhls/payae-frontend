@@ -38,7 +38,12 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const usernamePrefix = displayEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
   const payaeId = `${usernamePrefix}@payae`;
   const upiString = `upi://pay?pa=${payaeId}&pn=${encodeURIComponent(actualName)}`;
-  const recentActivity = (transactions || []).filter((t: any) => t.type?.includes("PAYMENT")).sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 3);
+  
+  const recentActivity = (transactions || [])
+    .filter((t: any) => t.type?.includes("PAYMENT") || t.type === "TOPUP" || t.type === "LIQUIDATION")
+    .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 3);
+    
   const unreadCount = recentActivity.length > 0 ? recentActivity.length : 0;
   const bankBalance = dashData?.bankBalance || 0;
 
@@ -140,17 +145,26 @@ export default function Topbar({ onMenuClick }: { onMenuClick?: () => void }) {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-[-40px] md:right-0 mt-4 w-80 bg-black/80 border border-white/10 backdrop-blur-3xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] p-4 z-40">
                   <h3 className="text-white font-bold mb-3 border-b border-white/10 pb-2">Recent Activity</h3>
                   <div className="space-y-3">
-                    {recentActivity.length > 0 ? recentActivity.map((t: any) => (
+                    {recentActivity.length > 0 ? recentActivity.map((t: any) => {
+                      const isCredit = t.type === 'PAYMENT_RECEIVED' || t.type === 'TOPUP' || t.type === 'LIQUIDATION';
+                      return (
                       <div key={t.id} className="flex items-center gap-3">
-                         <div className={`p-2 rounded-xl ${t.type === 'PAYMENT_RECEIVED' ? 'bg-payae-success/20 text-payae-success' : t.type === 'PAYMENT_FAILED' ? 'bg-red-500/20 text-red-500' : 'bg-blue-500/20 text-blue-400'}`}>
-                           {t.type === 'PAYMENT_RECEIVED' ? <ArrowDownLeft className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
+                         <div className={`p-2 rounded-xl ${isCredit ? 'bg-payae-success/20 text-payae-success' : t.type === 'PAYMENT_FAILED' ? 'bg-red-500/20 text-red-500' : 'bg-blue-500/20 text-blue-400'}`}>
+                           {isCredit ? <ArrowDownLeft className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
                          </div>
                          <div>
-                           <p className="text-xs font-bold text-white truncate max-w-[200px]">{t.type === 'PAYMENT_RECEIVED' ? 'Received Money' : t.type === 'PAYMENT_FAILED' ? 'Payment Failed' : `Paid ${t.description || t.payeeName || 'User'}`}</p>
-                           <p className="text-[10px] text-gray-400">{t.type === 'PAYMENT_RECEIVED' ? '+' : '-'}₹{t.amount.toFixed(2)}</p>
+                           <p className="text-xs font-bold text-white truncate max-w-[200px]">
+                             {t.type === 'PAYMENT_RECEIVED' ? 'Received Money' : 
+                              t.type === 'TOPUP' ? 'Wallet Top-Up' : 
+                              t.type === 'LIQUIDATION' ? 'Asset Liquidated' : 
+                              t.type === 'PAYMENT_FAILED' ? 'Payment Failed' : 
+                              `Paid ${t.description || t.payeeName || 'User'}`}
+                           </p>
+                           <p className="text-[10px] text-gray-400">{isCredit ? '+' : '-'}₹{t.amount.toFixed(2)}</p>
                          </div>
                       </div>
-                    )) : <p className="text-sm text-gray-400">All caught up! No new alerts.</p>}
+                      );
+                    }) : <p className="text-sm text-gray-400">All caught up! No new alerts.</p>}
                   </div>
                 </motion.div>
               )}

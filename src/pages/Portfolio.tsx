@@ -147,7 +147,7 @@ export default function Portfolio() {
             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-black/40 backdrop-blur-md px-6 py-2.5 rounded-xl border border-white/10 text-center shadow-lg">
               <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-0.5">Total Value</p>
               <p className="text-xl font-black text-payae-success flex items-center justify-center">
-                 <span className="mr-0.5">₹</span><AnimatedNumber value={totalWealth} />
+                 <AnimatedNumber value={totalWealth} />
               </p>
             </motion.div>
           </div>
@@ -177,7 +177,7 @@ export default function Portfolio() {
             <div>
                 <h3 className="text-gray-400 font-bold uppercase tracking-wider text-xs mb-1">Smart Savings</h3>
                 <div className="text-3xl font-black text-white flex items-center">
-                    <span className="text-gray-500 mr-1 text-2xl">₹</span><AnimatedNumber value={calcSavings} />
+                    <AnimatedNumber value={calcSavings} />
                 </div>
             </div>
           </motion.div>
@@ -195,7 +195,7 @@ export default function Portfolio() {
             <div>
                 <h3 className="text-gray-400 font-bold uppercase tracking-wider text-xs mb-1">Mutual Funds</h3>
                 <div className="text-3xl font-black text-white flex items-center">
-                    <span className="text-gray-500 mr-1 text-2xl">₹</span><AnimatedNumber value={calcMf} />
+                    <AnimatedNumber value={calcMf} />
                 </div>
             </div>
           </motion.div>
@@ -214,7 +214,7 @@ export default function Portfolio() {
               <div>
                   <h3 className="text-gray-400 font-bold uppercase tracking-wider text-xs mb-1">Digital Gold</h3>
                   <div className="text-3xl font-black text-white flex items-center">
-                      <span className="text-gray-500 mr-1 text-2xl">₹</span><AnimatedNumber value={calcGold} />
+                      <AnimatedNumber value={calcGold} />
                   </div>
               </div>
               <div className="text-right pb-1">

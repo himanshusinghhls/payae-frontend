@@ -157,7 +157,7 @@ export default function Dashboard() {
   const bankBalance = Number(dashData?.bankBalance || 0);
   const totalPayments = Number(dashData?.totalInvested || dashData?.totalPayments || 0);
   const totalWealth = calcSavings + calcMf + calcGold;
-  const goalTarget = Number(profile?.wealthGoal) || 50000;
+  const goalTarget = Number(profile?.wealthGoal) || 2000;
   
   if (totalWealth >= goalTarget && !localStorage.getItem("milestoneGoal")) {
     setShowConfetti(true);
